@@ -1,9 +1,4 @@
-import os
-import webbrowser
-import http.server
-import socketserver
 
-html_content = """
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -401,19 +396,3 @@ window.onload = () => { carregarCaso(casoAtualIndex); };
 </script>
 </body>
 </html>
-"""
-
-PORT = 8000
-Handler = http.server.SimpleHTTPRequestHandler
-
-Cria o arquivo index.html que é o padrão exigido pelo GitHub Pages
-with open("index.html", "w", encoding="utf-8") as f:
-f.write(html_content)
-
-print(f"\n🌍 PRATICMEDICAL CONFIGURADO!")
-print(f"👉 O arquivo 'index.html' foi gerado no diretório atual.")
-print(f"👉 Servidor de testes local ativo. Acesse no Chrome do tablet: localhost:{PORT}")
-
-socketserver.TCPServer.allow_reuse_address = True
-with socketserver.TCPServer(("", PORT), Handler) as httpd:
-httpd.serve_forever()
