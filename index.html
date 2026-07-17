@@ -1,0 +1,419 @@
+import os
+import webbrowser
+import http.server
+import socketserver
+
+html_content = """
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRATICMEDICAL - Simulador de Emergência Avançado</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+--bg-main: #060913; --bg-card: #0B132B; --border-color: #1C2541;
+--text-main: #F1F5F9; --text-muted: #5C677D; --neon-blue: #4CC9F0;
+--neon-red: #F72585; --neon-green: #4BB543; --neon-yellow: #F7B801;
+--bg-darker: #010409;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; display: flex; justify-content: center; min-height: 100vh; }
+.wrapper { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 15px; }
+
+.top-bar { background: var(--bg-card); border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+.brand { font-weight: 800; font-size: 1.4rem; letter-spacing: 1px; color: var(--text-main); }
+.brand span { color: var(--neon-blue); }
+.meta-info { display: flex; gap: 12px; align-items: center; }
+.badge { background: var(--bg-darker); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+.badge-timer { border-color: var(--neon-red); color: var(--neon-red); font-weight: bold; }
+
+.dashboard { display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; }
+@media(max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
+
+.panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+.panel-header { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; }
+
+.vitals-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.vital-box { background: var(--bg-darker); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; position: relative; }
+.vital-box::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--border-color); }
+.vital-box.critical::before { background: var(--neon-red); }
+.vital-box.stable::before { background: var(--neon-green); }
+.v-label { font-size: 0.7rem; color: var(--text-muted); }
+.v-val { font-size: 1.4rem; font-weight: 700; margin-top: 5px; }
+
+.chart-box { background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; height: 220px; overflow-y: auto; line-height: 1.6; }
+
+.options-list { display: flex; flex-direction: column; gap: 8px; }
+.btn-action { background: #151E3D; border: 1px solid var(--border-color); color: var(--text-main); padding: 14px 16px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s ease; width: 100%; }
+.btn-action:hover { background: #1E2B58; border-color: var(--neon-blue); }
+.btn-back { border-color: rgba(247, 37, 133, 0.4); color: var(--neon-red); }
+
+.critical { color: var(--neon-red); }
+.stable { color: var(--neon-green); }
+.warning { color: var(--neon-yellow); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+<div class="top-bar">
+<div class="brand">PRATIC<span>MEDICAL</span></div>
+<div class="meta-info">
+<div class="badge" id="levelDisplay">NÍVEL: --</div>
+<div class="badge" id="turnDisplay">Turno --</div>
+<div class="badge badge-timer" id="timerDisplay">⏱️ 02:00</div>
+</div>
+</div>
+
+<div class="dashboard">
+<div style="display: flex; flex-direction: column; gap: 15px;">
+<div class="panel">
+<div class="panel-header"><span>Admissão de Emergência</span><span id="caseIdDisplay">Caso --</span></div>
+<div id="patientProfile" style="font-size: 0.95rem; line-height: 1.5;"></div>
+</div>
+
+<div class="panel">
+<div class="panel-header">Sinais Vitais Dinâmicos</div>
+<div class="vitals-grid">
+<div class="vital-box" id="boxPA"><div class="v-label">PRESSÃO ARTERIAL (mmHg)</div><div class="v-val" id="valPA">--/--</div></div>
+<div class="vital-box" id="boxFC"><div class="v-label">FREQUÊNCIA CARDÍACA (bpm)</div><div class="v-val" id="valFC">--</div></div>
+<div class="vital-box" id="boxFR"><div class="v-label">FREQ. RESPIRATÓRIA (irpm)</div><div class="v-val" id="valFR">--</div></div>
+<div class="vital-box" id="boxSPO2"><div class="v-label">SATURAÇÃO O₂ (%)</div><div class="v-val" id="valSPO2">--</div></div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 15px;">
+<div class="panel">
+<div class="panel-header">Prontuário Médico & Resultados Eletrônicos</div>
+<div class="chart-box" id="chartLog"></div>
+</div>
+
+<div class="panel">
+<div class="panel-header">Painel de Tomada de Decisão Médica</div>
+<div class="options-list" id="controlPanel"></div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const databaseCasos = [
+{
+id: 1, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Mulher, 62 anos.<br><b>Queixa:</b> Dor precordial opressiva de forte intensidade há 1 hora irradiando para mandíbula, acompanhada de náuseas.",
+vitasIniciais: { paS: 150, paD: 95, fc: 88, fr: 18, spo2: 93 },
+diagnosticoCorreto: "iam", condutaCorreta: "aas_clopi", exameOuro: "ecg",
+logs: { init: "Admitida na Sala de Emergência com dor torácica típica.", ecg: "ECG: Supra de segmento ST de 3mm de V1 a V4 (Parede Anterior).", tropo: "Troponina I ultrassensível elevada acima do percentil 99.", errado: "Erro: Atrasar o tratamento antitrombótico aumenta a taxa de necrose miocárdica." }
+},
+{
+id: 2, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Homem, 28 anos.<br><b>Queixa:</b> Dispneia súbita e dor torácica pleurítica à direita há 40 minutos.",
+vitasIniciais: { paS: 105, paD: 65, fc: 118, fr: 28, spo2: 87 },
+diagnosticoCorreto: "pntx", condutaCorreta: "toraco_agulha", exameOuro: "rx",
+logs: { init: "Paciente taquipneico. Murmúrio vesicular totalmente abolido à direita.", rx: "Raio-X: Hipertransparência à direita com desvio do mediastino para a esquerda.", errado: "Erro Crítico: Ventilar com pressão positiva antes de drenar causará PCR imediata em AESP!" }
+},
+{
+id: 3, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Mulher, 74 anos.<br><b>Queixa:</b> Rebaixamento do nível de consciência, letargia e febre.",
+vitasIniciais: { paS: 82, paD: 44, fc: 126, fr: 26, spo2: 90 },
+diagnosticoCorreto: "sepse", condutaCorreta: "cristaloide_atb", exameOuro: "lactato",
+logs: { init: "Paciente torporosa, TEC de 5 segundos, pele marmorada.", lactato: "Gasometria: Lactato arterial de 4.2 mmol/L. Acidose metabólica severa.", errado: "Erro: Iniciar droga vasoativa sem expansão volêmica prévia viola as diretrizes do Surviving Sepsis." }
+},
+{
+id: 4, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Homem, 45 anos.<br><b>Queixa:</b> Crise convulsiva tônico-clônica generalizada há 6 minutos na recepção, mantendo atividade convulsiva contínua.",
+vitasIniciais: { paS: 140, paD: 90, fc: 110, fr: 24, spo2: 89 },
+diagnosticoCorreto: "est_epiletico", condutaCorreta: "diazepam", exameOuro: "glicemia",
+logs: { init: "Paciente em Estado de Mal Epiléptico.", glicemia: "Glicemia Capilar: 104 mg/dL (Normoglicemia).", errado: "Erro: Conduzir investigação por imagem antes do controle farmacológico da crise perpetua lesão neurológica." }
+},
+{
+id: 5, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Mulher, 34 anos.<br><b>Queixa:</b> Palpitação súbita associada a mal-estar e tontura leve.",
+vitasIniciais: { paS: 115, paD: 70, fc: 185, fr: 20, spo2: 95 },
+diagnosticoCorreto: "tsvd", condutaCorreta: "manobra_vagal", exameOuro: "ecg",
+logs: { init: "Admitida estável hemodinamicamente, taquicárdica pura.", ecg: "ECG: Taquicardia de complexo QRS estreito, regular, sem ondas P visíveis (TSV).", errado: "Erro: Cardioversão elétrica sincronizada imediata é reservada para pacientes instáveis!" }
+},
+{
+id: 6, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 60,
+perfil: "<b>Paciente:</b> Homem, 68 anos.<br><b>Queixa:</b> Desmaio em casa. Agora na sala vermelha com dor torácica intensa.",
+vitasIniciais: { paS: 75, paD: 40, fc: 36, fr: 16, spo2: 91 },
+diagnosticoCorreto: "bavt", condutaCorreta: "marcapasso", exameOuro: "ecg",
+logs: { init: "Paciente chocado por bradiarritmia severa.", ecg: "ECG: Dissociação atrioventricular completa com QRS largo. Ritmo de escape ventricular (BAVT).", errado: "Erro: Atropina pura geralmente falha em BAVT com QRS largo e atrasa a terapia elétrica de escolha." }
+},
+{
+id: 7, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Homem, 52 anos.<br><b>Queixa:</b> Dispneia grave de início súbito após longa viagem aérea internacional.",
+vitasIniciais: { paS: 110, paD: 70, fc: 124, fr: 28, spo2: 84 },
+diagnosticoCorreto: "tep", condutaCorreta: "anticoagulacao", exameOuro: "lactato",
+logs: { init: "Taquipneico, pulmões limpos à ausculta, panturrilha direita empastada.", lactato: "Gasometria: Hipoxemia severa (PaO2 54 mmHg) com alcalose respiratória.", errado: "Erro: Dar diuréticos de alça (Furosemida) piorará o choque em suspeita de TEP por queda do retorno venoso de VD." }
+},
+{
+id: 8, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Mulher, 29 anos.<br><b>Queixa:</b> Dispneia intensa, sibilos audíveis sem estetoscópio e edema labial após ingestão de camarão.",
+vitasIniciais: { paS: 78, paD: 42, fc: 132, fr: 30, spo2: 85 },
+diagnosticoCorreto: "anafilaxia", condutaCorreta: "adrenalina_im", exameOuro: "lactato",
+logs: { init: "Estridor laríngeo, placas urticadas difusas.", lactato: "Lactato: 3.1 mmol/L demonstrando hipoperfusão sistêmica por choque distributivo.", errado: "Erro Fatal: Corticoides e anti-histamínicos não revertem o colapso respiratório de forma imediata. A droga de primeira linha absoluta é Adrenalina IM!" }
+},
+{
+id: 9, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Homem, 19 anos.<br><b>Queixa:</b> Confusão mental extrema, vômitos e hálito adocicado cetônico.",
+vitasIniciais: { paS: 100, paD: 60, fc: 112, fr: 26, spo2: 96 },
+diagnosticoCorreto: "cad", condutaCorreta: "cristaloide_atb", exameOuro: "glicemia",
+logs: { init: "Desidratação grave detectada (sinal do lamber visível).", glicemia: "Glicemia: 485 mg/dL. Gasometria: pH 7.12 com HCO3 de 9 mEq/L (CAD).", errado: "Erro: Fazer insulina em bolus de forma intempestiva com potássio desconhecido pode desencadear arritmia fatal." }
+},
+{
+id: 10, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Homem, 71 anos, hipertenso e tabagista crônico.<br><b>Queixa:</b> Cefaleia holocraniana explosiva seguida de fraqueza súbita no dimídio esquerdo há 2 horas.",
+vitasIniciais: { paS: 220, paD: 125, fc: 94, fr: 18, spo2: 95 },
+diagnosticoCorreto: "avch", condutaCorreta: "marcapasso", exameOuro: "rx",
+logs: { init: "Hemiplegia à esquerda com desvio conjugado do olhar.", rx: "Tomografia Craniana Computadorizada (Simulada): Volumoso sangramento intraparenquimatoso na região dos núcleos da base à direita.", errado: "Erro: Trombolisar um AVC Hemorrágico causará herniação cerebral imediata e óbito!" }
+},
+{
+id: 11, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Mulher, 65 anos, diabética.<br><b>Queixa:</b> Falta de ar intensa e tosse com escarro rosado fluidificado.",
+vitasIniciais: { paS: 210, paD: 120, fc: 115, fr: 32, spo2: 82 },
+diagnosticoCorreto: "eap", condutaCorreta: "toraco_agulha", exameOuro: "rx",
+logs: { init: "Estertoração crepitante disseminada até ápices bilateralmente. Paciente em ortopneia.", rx: "Raio-X: Infiltrado em asa de borboleta, lines B de Kerley e cardiomegália proeminente.", errado: "Erro: Administrar volume hídrico no Edema Agudo de Pulmão Hipertensivo sufocará o paciente." }
+},
+{
+id: 12, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Homem, 55 anos, etilista crônico.<br><b>Queixa:</b> Hematêmese volumosa (3 episódios) na sala de espera, evoluindo com síncope.",
+vitasIniciais: { paS: 70, paD: 35, fc: 138, fr: 24, spo2: 91 },
+diagnosticoCorreto: "hda_varizes", condutaCorreta: "cristaloide_atb", exameOuro: "lactato",
+logs: { init: "Paciente desorientado, pálido, com estigmas de hepatopatia crônica.", lactato: "Lactato: 5.0 mmol/L demonstrando choque hipovolêmico classe IV iminente.", errado: "Erro: Encaminhar o paciente instável para a endoscopia digestiva sem estabilização hemodinâmica prévia e proteção de via aérea resulta em parada por hipovolemia ou broncoaspiração." }
+},
+{
+id: 13, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Homem, 33 anos.<br><b>Queixa:</b> Sudorese, tremores, palpitação e agressividade severa após uso abusivo e agudo de cocaína purificada.",
+vitasIniciais: { paS: 195, paD: 115, fc: 142, fr: 22, spo2: 97 },
+diagnosticoCorreto: "intox_cocaina", condutaCorreta: "diazepam", exameOuro: "ecg",
+logs: { init: "Agitação psicomotora importante, midríase bilateral reagente.", ecg: "ECG: Taquicardia sinusal pronunciada sem sinais de isquemia focal.", errado: "Erro de Farmacologia: O uso isolado de beta-bloqueadores (como Metoprolol) causará estimulação alfa-adrenérgica sem oposição, exacerbando a crise hipertensiva de forma fatal!" }
+},
+{
+id: 14, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 60,
+perfil: "<b>Paciente:</b> Homem, 61 anos, pós-operatório imediato de revascularização miocárdica.<br><b>Queixa:</b> Hipotensão refratária na UTI com estase de jugular bilateral profunda.",
+vitasIniciais: { paS: 72, paD: 40, fc: 128, fr: 26, spo2: 89 },
+diagnosticoCorreto: "tamponamento", condutaCorreta: "toraco_agulha", exameOuro: "rx",
+logs: { init: "Bulhas cardíacas nitidamente hipofonéticas, pulso paradoxal clássico presente.", rx: "Raio-X/Eco à beira do leito: Silhueta cardíaca em formato de moringa com volumoso derrame pericárdico.", errado: "Erro: Tentar tratar choque obstrutivo compressivo puramente com noradrenalina sem descompressão mecânica não altera o desfecho fatal." }
+},
+{
+id: 15, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Mulher, 41 anos.<br><b>Queixa:</b> Fraqueza muscular ascendente flácida e parestesias simétricas, evoluindo nas últimas horas com insuficiência respiratória progressiva.",
+vitasIniciais: { paS: 110, paD: 70, fc: 98, fr: 29, spo2: 86 },
+diagnosticoCorreto: "gbs", condutaCorreta: "adrenalina_im", exameOuro: "glicemia",
+logs: { init: "Uso de musculatura acessória, capacidade vital forçada criticamente reduzida.", glicemia: "Glicemia: 98 mg/dL. Força muscular grau II em membros inferiores.", errado: "Erro: Adiar a intubação orotraqueal protetora em vigência de falência ventilatória neuromuscular neuromuscular causa PCR por hipóxia e fadiga diafragmática." }
+},
+{
+id: 16, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Homem, 25 anos.<br><b>Queixa:</b> Sonolência grave, pupilas puntiformes simétricas e bradipneia importante após suspeita de overdose por opioides injetáveis.",
+vitasIniciais: { paS: 90, paD: 55, fc: 54, fr: 6, spo2: 78 },
+diagnosticoCorreto: "overdose_opioide", condutaCorreta: "diazepam", exameOuro: "glicemia",
+logs: { init: "Bradipneia crítica com risco iminente de parada respiratória.", glicemia: "Glicemia: 112 mg/dL.", errado: "Erro: Administrar flumazenil isolado não reverte depressão respiratória causada por opioides e pode deflagrar convulsões refratárias." }
+},
+{
+id: 17, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120,
+perfil: "<b>Paciente:</b> Mulher, 59 anos, renal crônica dialítica.<br><b>Queixa:</b> Perdeu as últimas duas sessões de hemodiálise devido a problemas de transporte, queixando-se de fraqueza generalizada severa e palpitações.",
+vitasIniciais: { paS: 105, paD: 60, fc: 48, fr: 20, spo2: 94 },
+diagnosticoCorreto: "hipercalemia", condutaCorreta: "marcapasso", exameOuro: "ecg",
+logs: { init: "Astenia muscular profunda, reflexos tendíneos diminuídos.", ecg: "ECG: Ondas T altas, simétricas e apiculadas ('em tenda'), com desaparecimento da onda P e alargamento visível do QRS.", errado: "Erro Crítico: Atrasar o uso de Gluconato de Cálcio a 10% EV em vigência de alteração eletrocardiográfica expõe o paciente a fibrilação ventricular iminente." }
+},
+{
+id: 18, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90,
+perfil: "<b>Paciente:</b> Homem, 37 anos.<br><b>Queixa:</b> Febre alta há 3 dias, cefaleia intensa, rigidez de nuca e vômitos em jato.",
+vitasIniciais: { paS: 125, paD: 80, fc: 104, fr: 22, spo2: 96 },
+diagnosticoCorreto: "meningite", condutaCorreta: "cristaloide_atb", exameOuro: "glicemia",
+logs: { init: "Sinal de Brudzinski e Kernig nitidamente positivos à propedêutica.", glicemia: "Glicemia: 99 mg/dL. Líquor turvo (coleta planejada).", errado: "Erro: Postergar a administração da primeira dose de antibioticoterapia empírica (Ceftriaxona) para aguardar imagem ou exames laboratoriais aumenta a mortalidade neurológica drasticamente." }
+}
+ ];
+
+let casoAtualIndex = 0;
+let gameState = {};
+let timerInterval = null;
+
+function carregarCaso(index) {
+clearInterval(timerInterval);
+const dados = databaseCasos[index];
+gameState = {
+dados: dados, turno: 1,
+paS: dados.vitasIniciais.paS, paD: dados.vitasIniciais.paD,
+fc: dados.vitasIniciais.fc, fr: dados.vitasIniciais.fr, spo2: dados.vitasIniciais.spo2,
+examesRealizados: [], medicacoesFeitas: [], concluido: false,
+tempoRestante: dados.tempoLimite
+};
+
+document.getElementById('levelDisplay').innerText = NÍVEL: ${dados.nivel}; document.getElementById('caseIdDisplay').innerText =Caso #${dados.id};
+document.getElementById('patientProfile').innerHTML = dados.perfil;
+document.getElementById('chartLog').innerHTML = <div style="color: var(--neon-blue)"&gt;[ADMISSÃO]: ${dados.logs.init}</div>`;
+
+atualizarMonitores();
+renderizarMenuPrincipal();
+iniciarCronometro();
+}
+
+function iniciarCronometro() {
+atualizarTimerUI();
+timerInterval = setInterval(() => {
+gameState.tempoRestante--;
+atualizarTimerUI();
+if (gameState.tempoRestante <= 0) {
+clearInterval(timerInterval);
+finalizarJogo(false, "Falência de tempo crítico à beira do leito: Choque progressivo irreversível.");
+}
+}, 1000);
+}
+
+function atualizarTimerUI() {
+const minutos = Math.floor(gameState.tempoRestante / 60).toString().padStart(2, '0');
+const segundos = (gameState.tempoRestante % 60).toString().padStart(2, '0');
+document.getElementById('timerDisplay').innerText = ⏱️${minutos}:${segundos};
+}
+
+function atualizarMonitores() {
+document.getElementById('valPA').innerText = ${gameState.paS}/$`{gameState.paD}`; document.getElementById('valFC').innerText =${gameState.fc}; document.getElementById('valFR').innerText =
+
+{gameState.spo2}%`;
+
+document.getElementById('boxPA').className = vital-box ${gameState.paS < 90 || gameState.paS > 170 ? 'critical' : 'stable'}; document.getElementById('boxFC').className =vital-box ${gameState.fc &gt; 100 || gameState.fc &lt; 55 ? 'critical' : 'stable'};
+document.getElementById('boxFR').className = vital-box ${gameState.fr > 22 ? 'critical' : 'stable'}; document.getElementById('boxSPO2').className =vital-box ${gameState.spo2 &lt; 92 ? 'critical' : 'stable'};
+
+document.getElementById('turnDisplay').innerText = Turno ${gameState.turno}/${gameState.dados.maxTurnos};
+}
+
+function pushLog(txt, tipo) {
+const cores = { info: 'var(--text-main)', sucess: 'var(--neon-green)', alert: 'var(--neon-yellow)', error: 'var(--neon-red)' };
+const container = document.getElementById('chartLog');
+container.innerHTML += <div style="color: ${cores[tipo] || cores.info}; margin-top: 5px;">➔ ${txt}&lt;/div>;
+container.scrollTop = container.scrollHeight;
+}
+
+function passarTurno() {
+gameState.turno++;
+if (gameState.turno > gameState.dados.maxTurnos && !gameState.concluido) {
+finalizarJogo(false, "Esgotamento de turnos propedêuticos: Ausência de conduta definitiva na janela de ouro.");
+} else {
+atualizarMonitores();
+}
+}
+
+function renderizarMenuPrincipal() {
+const panel = document.getElementById('controlPanel');
+panel.innerHTML = &lt;button class="btn-action" onclick="abrirSubMenu('exames')"&gt;🔬 Abordagem Propedêutica (Exames)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 8px;" onclick="abrirSubMenu('condutas')"&gt;💊 Prescrição Farmacológica e Doses&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 8px;" onclick="abrirSubMenu('diagnostico')"&gt;⚖️ Estabelecer Diagnóstico Definitivo&lt;/button&gt;;
+}
+
+function abrirSubMenu(tipo) {
+const panel = document.getElementById('controlPanel');
+if (tipo === 'exames') {
+panel.innerHTML = &lt;button class="btn-action" onclick="solicitarExame('ecg')"&gt;1. Eletrocardiograma de 12 Derivações&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('rx')"&gt;2. Radiografia Digital de Tórax no Leito&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('lactato')"&gt;3. Gasometria Arterial com Dosagem de Lactato&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('glicemia')"&gt;4. Glicemia Capilar Periférica de Ponta de Dedo&lt;/button&gt; &lt;button class="btn-action btn-back" style="margin-top: 12px;" onclick="renderizarMenuPrincipal()"&gt;⬅ Voltar&lt;/button&gt;;
+} else if (tipo === 'condutas') {
+panel.innerHTML = &lt;button class="btn-action" onclick="aplicarCondutaDose('aas_clopi')"&gt;1. Protocolo Antiagregante Otimizado (AAS 300mg + Clopidogrel 300mg PO)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('toraco_agulha')"&gt;2. Descompressão Torácica ou Alívio Volumétrico Mecânico Imediato&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('cristaloide_atb')"&gt;3. Expansão Volêmica Guiada (Cristaloide) e/ou Alvo Direcionado Sepsis&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('diazepam')"&gt;4. Benzodiazepínico Anticonvulsivante (Diazepam 10mg EV)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('manobra_vagal')"&gt;5. Manobra Vagal Modificada de Escolha&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('marcapasso')"&gt;6. Estimulação Elétrica Transcutânea ou Terapia Antídoto Estabilizadora&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('anticoagulacao')"&gt;7. Anticoagulação Plena com Heparina Não Fracionada EV&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('adrenalina_im')"&gt;8. Adrenalina 0.5mg IM em região Antero-Lateral da Coxa&lt;/button&gt; &lt;button class="btn-action btn-back" style="margin-top: 12px;" onclick="renderizarMenuPrincipal()"&gt;⬅ Voltar&lt;/button&gt;;
+} else if (tipo === 'diagnostico') {
+panel.innerHTML = &lt;button class="btn-action" onclick="verificarDiagnostico('iam')"&gt;➔ IAM com Supra de ST (SCA)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('pntx')"&gt;➔ Pneumotórax Hipertensivo&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('sepse')"&gt;➔ Choque Séptico&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('est_epiletico')"&gt;➔ Estado de Mal Epiléptico&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('tsvd')"&gt;➔ Taquicardia Supraventricular Paroxística&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('bavt')"&gt;➔ Bloqueio Atrioventricular Total (BAVT)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('tep')"&gt;➔ Tromboembolismo Pulmonar Agudo&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('anafilaxia')"&gt;➔ Choque Anafilático Severo&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('cad')"&gt;➔ Cetoacidose Diabética (CAD)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('avch')"&gt;➔ Acidente Vascular Cerebral Hemorrágico&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('eap')"&gt;➔ Edema Agudo de Pulmão Cardiogênico&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('hda_varizes')"&gt;➔ Hemorragia Digestiva Alta Varecial&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('intox_cocaina')"&gt;➔ Síndrome Adrenérgica por Cocaína&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('tamponamento')"&gt;➔ Tamponamento Cardíaco Obstrutivo&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('gbs')"&gt;➔ Insuficiência Respiratória por Guillain-Barré&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('overdose_opioide')"&gt;➔ Intoxicação Aguda por Opioides&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('hipercalemia')"&gt;➔ Hipercalemia Grave com Repercussão Elétrica&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('meningite')"&gt;➔ Neuroinfecção / Meningite Bacteriana Aguda&lt;/button&gt; &lt;button class="btn-action btn-back" style="margin-top: 12px;" onclick="renderizarMenuPrincipal()"&gt;⬅ Voltar&lt;/button&gt;;
+}
+}
+
+function solicitarExame(exame) {
+if (gameState.examesRealizados.includes(exame)) {
+pushLog("Exame já disponível no prontuário.", "alert");
+return;
+}
+gameState.examesRealizados.push(exame);
+
+if (gameState.dados.exameOuro === exame || exame === 'ecg' || exame === 'rx' || exame === 'glicemia' || exame === 'lactato') {
+pushLog(gameState.dados.logs[exame] || "Exame analisado sem alterações críticas aberrantes.", "sucess");
+} else {
+pushLog("Resultado padrão dentro dos limites normais esperados para o caso.", "info");
+}
+passarTurno();
+if (!gameState.concluido) renderizarMenuPrincipal();
+}
+
+function aplicarCondutaDose(conduta) {
+gameState.medicacoesFeitas.push(conduta);
+
+if (gameState.dados.condutaCorreta === conduta) {
+pushLog("Conduta Perfeita conforme Diretrizes Internacionais e Nacionais vigentes. Parâmetros clínicos respondendo.", "sucess");
+if (conduta === 'aas_clopi') { gameState.fc = 76; gameState.paS = 125; }
+else if (conduta === 'toraco_agulha') { gameState.paS = 115; gameState.fc = 82; gameState.spo2 = 98; gameState.fr = 16; }
+else if (conduta === 'cristaloide_atb') { gameState.paS = 100; gameState.fc = 92; }
+else if (conduta === 'diazepam') { gameState.fc = 88; gameState.fr = 14; }
+else if (conduta === 'manobra_vagal') { gameState.fc = 78; }
+else if (conduta === 'marcapasso') { gameState.fc = 70; gameState.paS = 110; }
+else if (conduta === 'anticoagulacao') { gameState.fc = 90; gameState.spo2 = 93; }
+else if (conduta === 'adrenalina_im') { gameState.paS = 105; gameState.fc = 95; gameState.spo2 = 97; }
+} else {
+pushLog(gameState.dados.logs.errado || "Conduta incompatível ou ineficaz para o foco fisiopatológico primário.", "error");
+gameState.paS -= 25; gameState.fc += 20;
+if (gameState.paS < 55) {
+finalizarJogo(false, "Instabilidade refratária com progressão para Choque Refratário Terminal.");
+return;
+}
+}
+passarTurno();
+if (!gameState.concluido) renderizarMenuPrincipal();
+}
+
+function verificarDiagnostico(diag) {
+if (gameState.dados.diagnosticoCorreto === diag) {
+if (gameState.medicacoesFeitas.includes(gameState.dados.condutaCorreta)) {
+finalizarJogo(true, "Diagnóstico preciso e condutas de estabilização tomadas com excelente tempo de resposta e segurança clínica.");
+} else {
+finalizarJogo(false, "Diagnóstico correto, porém falha em instituir a terapêutica de urgência imediata de suporte à vida.");
+}
+} else {
+finalizarJogo(false, "Erro de hipótese diagnóstica estrutural. Paciente evoluiu mal devido à ausência de conduta específica.");
+}
+}
+
+function finalizarJogo(vitoria, mensagem) {
+clearInterval(timerInterval);
+gameState.concluido = true;
+const panel = document.getElementById('controlPanel');
+if (vitoria) {
+pushLog([CASO RESOLVIDO]: ${mensagem}, "sucess"); panel.innerHTML =<div style="background: rgba(75,181,67,0.1); border: 1px solid var(--neon-green); padding: 15px; border-radius: 8px; color: var(--neon-green); font-weight: bold; text-align: center;">ALTA COMPORTAMENTAL E ESTABILIZAÇÃO CONCEBIDA</div>; } else { pushLog([CATASTRÓFICO]: ${mensagem}, "error");
+panel.innerHTML = <div style="background: rgba(247,37,133,0.1); border: 1px solid var(--neon-red); padding: 15px; border-radius: 8px; color: var(--neon-red); font-weight: bold; text-align: center;"&gt;DESFECHO DESFAVORÁVEL - PARADA CARDIORESPIRATÓRIA&lt;/div>;
+}
+
+const btnProximo = document.createElement('button');
+btnProximo.className = 'btn-action';
+btnProximo.style.marginTop = '12px';
+
+if (casoAtualIndex < databaseCasos.length - 1) {
+btnProximo.innerText = '➔ Avançar para o Próximo Caso';
+btnProximo.onclick = () => {
+casoAtualIndex++;
+carregarCaso(casoAtualIndex);
+};
+} else {
+btnProximo.innerText = '🔄 Reiniciar da Admissão 1';
+btnProximo.onclick = () => {
+casoAtualIndex = 0;
+carregarCaso(casoAtualIndex);
+};
+}
+panel.appendChild(btnProximo);
+}
+
+window.onload = () => { carregarCaso(casoAtualIndex); };
+</script>
+</body>
+</html>
+"""
+
+PORT = 8000
+Handler = http.server.SimpleHTTPRequestHandler
+
+Cria o arquivo index.html que é o padrão exigido pelo GitHub Pages
+with open("index.html", "w", encoding="utf-8") as f:
+f.write(html_content)
+
+print(f"\n🌍 PRATICMEDICAL CONFIGURADO!")
+print(f"👉 O arquivo 'index.html' foi gerado no diretório atual.")
+print(f"👉 Servidor de testes local ativo. Acesse no Chrome do tablet: localhost:{PORT}")
+
+socketserver.TCPServer.allow_reuse_address = True
+with socketserver.TCPServer(("", PORT), Handler) as httpd:
+httpd.serve_forever()
