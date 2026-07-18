@@ -1,397 +1,396 @@
-
 html_content = """
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRATICMEDICAL - Advanced Residency Simulator</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-:root {
---bg-main: #060913; --bg-card: #0B132B; --border-color: #1C2541;
---text-main: #F1F5F9; --text-muted: #5C677D; --neon-blue: #4CC9F0;
---neon-red: #F72585; --neon-green: #4BB543; --neon-yellow: #F7B801;
---bg-darker: #010409;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; display: flex; justify-content: center; min-height: 100vh; }
-.wrapper { width: 100%; max-width: 1250px; display: flex; flex-direction: column; gap: 15px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRATICMEDICAL - Advanced Residency Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #060913; --bg-card: #0B132B; --border-color: #1C2541;
+            --text-main: #F1F5F9; --text-muted: #5C677D; --neon-blue: #4CC9F0;
+            --neon-red: #F72585; --neon-green: #4BB543; --neon-yellow: #F7B801;
+            --bg-darker: #010409;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; display: flex; justify-content: center; min-height: 100vh; }
+        .wrapper { width: 100%; max-width: 1250px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .top-bar { background: var(--bg-card); border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-weight: 800; font-size: 1.4rem; letter-spacing: 1px; color: var(--text-main); }
+        .brand span { color: var(--neon-blue); }
+        .meta-info { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+        .badge { background: var(--bg-darker); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        .badge-timer { border-color: var(--neon-red); color: var(--neon-red); font-weight: bold; }
+        .badge-iatrogenia { border-color: var(--neon-yellow); color: var(--neon-yellow); font-weight: bold; }
+        .badge-xp { border-color: var(--neon-green); color: var(--neon-green); font-weight: bold; }
+        .badge-elo { border-color: var(--neon-yellow); color: var(--neon-yellow); font-weight: bold; }
+        .badge-shift { border-color: var(--neon-blue); color: var(--neon-blue); }
+        .badge-mode { border-color: var(--neon-green); color: var(--neon-green); cursor: pointer; user-select: none; }
+        
+        .dashboard { display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; }
+        @media(max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
+        
+        .panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .panel-header { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; }
+        
+        .monitor-scope { background: #000; border: 2px solid #111; border-radius: 8px; height: 100px; width: 100%; position: relative; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
 
-.top-bar { background: var(--bg-card); border: 1px solid var(--border-color); padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-.brand { font-weight: 800; font-size: 1.4rem; letter-spacing: 1px; color: var(--text-main); }
-.brand span { color: var(--neon-blue); }
-.meta-info { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-.badge { background: var(--bg-darker); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
-.badge-timer { border-color: var(--neon-red); color: var(--neon-red); font-weight: bold; }
-.badge-iatrogenia { border-color: var(--neon-yellow); color: var(--neon-yellow); font-weight: bold; }
-.badge-xp { border-color: var(--neon-green); color: var(--neon-green); font-weight: bold; }
-.badge-elo { border-color: var(--neon-yellow); color: var(--neon-yellow); font-weight: bold; }
-.badge-shift { border-color: var(--neon-blue); color: var(--neon-blue); }
-.badge-mode { border-color: var(--neon-green); color: var(--neon-green); cursor: pointer; user-select: none; }
+        .vitals-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .vital-box { background: var(--bg-darker); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; position: relative; }
+        .vital-box::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--border-color); }
+        .vital-box.critical::before { background: var(--neon-red); }
+        .vital-box.stable::before { background: var(--neon-green); }
+        .v-label { font-size: 0.7rem; color: var(--text-muted); }
+        .v-val { font-size: 1.4rem; font-weight: 700; margin-top: 5px; }
+        
+        .chart-box { background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; height: 180px; overflow-y: auto; line-height: 1.6; }
+        
+        .exam-image-container { display: none; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; text-align: center; margin-top: 5px; }
+        .exam-image-container img { max-width: 100%; max-height: 250px; border-radius: 6px; border: 1px solid var(--border-color); }
 
-.dashboard { display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; }
-@media(max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
+        .pe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 5px; }
+        .btn-pe { background: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; text-align: center; text-transform: uppercase; font-weight: 600; }
+        .btn-pe:hover { border-color: var(--neon-blue); background: #151E3D; }
 
-.panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-.panel-header { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; }
+        .debriefing-card { background: rgba(11, 19, 43, 0.95); border: 2px solid var(--neon-blue); border-radius: 8px; padding: 15px; margin-top: 10px; line-height: 1.5; font-size: 0.9rem; }
+        .debriefing-title { font-weight: 800; color: var(--neon-blue); text-transform: uppercase; margin-bottom: 8px; font-size: 0.85rem; }
+        .debriefing-ref { font-style: italic; color: var(--neon-yellow); margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
 
-.monitor-scope { background: #000; border: 2px solid #111; border-radius: 8px; height: 100px; width: 100%; position: relative; overflow: hidden; }
-canvas { display: block; width: 100%; height: 100%; }
-
-.vitals-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.vital-box { background: var(--bg-darker); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; position: relative; }
-.vital-box::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--border-color); }
-.vital-box.critical::before { background: var(--neon-red); }
-.vital-box.stable::before { background: var(--neon-green); }
-.v-label { font-size: 0.7rem; color: var(--text-muted); }
-.v-val { font-size: 1.4rem; font-weight: 700; margin-top: 5px; }
-
-.chart-box { background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; height: 180px; overflow-y: auto; line-height: 1.6; }
-
-.exam-image-container { display: none; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; text-align: center; margin-top: 5px; }
-.exam-image-container img { max-width: 100%; max-height: 250px; border-radius: 6px; border: 1px solid var(--border-color); }
-
-.pe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 5px; }
-.btn-pe { background: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; text-align: center; text-transform: uppercase; font-weight: 600; }
-.btn-pe:hover { border-color: var(--neon-blue); background: #151E3D; }
-
-.debriefing-card { background: rgba(11, 19, 43, 0.95); border: 2px solid var(--neon-blue); border-radius: 8px; padding: 15px; margin-top: 10px; line-height: 1.5; font-size: 0.9rem; }
-.debriefing-title { font-weight: 800; color: var(--neon-blue); text-transform: uppercase; margin-bottom: 8px; font-size: 0.85rem; }
-.debriefing-ref { font-style: italic; color: var(--neon-yellow); margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
-
-.options-list { display: flex; flex-direction: column; gap: 8px; }
-.btn-action { background: #151E3D; border: 1px solid var(--border-color); color: var(--text-main); padding: 14px 16px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s ease; width: 100%; border: 1px solid var(--border-color); }
-.btn-action:hover { background: #1E2B58; border-color: var(--neon-blue); }
-.btn-back { border-color: rgba(247, 37, 133, 0.4); color: var(--neon-red); }
-.btn-help { border-color: var(--neon-yellow); color: var(--neon-yellow); background: rgba(247, 184, 1, 0.05); }
-
-.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #060913; display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; flex-direction: column; }
-.welcome-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 35px; text-align: center; max-width: 550px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-.welcome-box h2 { font-size: 2.2rem; margin-bottom: 8px; font-weight: 800; letter-spacing: 1px; }
-.welcome-box h2 span { color: var(--neon-blue); }
-.creator-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--neon-yellow); margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
-.form-group { text-align: left; margin-bottom: 15px; width: 100%; }
-.form-group label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
-.input-field { width: 100%; background: var(--bg-darker); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; color: var(--text-main); font-size: 0.95rem; outline: none; }
-</style>
+        .options-list { display: flex; flex-direction: column; gap: 8px; }
+        .btn-action { background: #151E3D; border: 1px solid var(--border-color); color: var(--text-main); padding: 14px 16px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s ease; width: 100%; border: 1px solid var(--border-color); }
+        .btn-action:hover { background: #1E2B58; border-color: var(--neon-blue); }
+        .btn-back { border-color: rgba(247, 37, 133, 0.4); color: var(--neon-red); }
+        .btn-help { border-color: var(--neon-yellow); color: var(--neon-yellow); background: rgba(247, 184, 1, 0.05); }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #060913; display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; flex-direction: column; }
+        .welcome-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 35px; text-align: center; max-width: 550px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        .welcome-box h2 { font-size: 2.2rem; margin-bottom: 8px; font-weight: 800; letter-spacing: 1px; }
+        .welcome-box h2 span { color: var(--neon-blue); }
+        .creator-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--neon-yellow); margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group { text-align: left; margin-bottom: 15px; width: 100%; }
+        .form-group label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
+        .input-field { width: 100%; background: var(--bg-darker); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; color: var(--text-main); font-size: 0.95rem; outline: none; }
+    </style>
 </head>
 <body>
 
 <div class="overlay" id="welcomeOverlay">
-<div class="welcome-box">
-<h2>PRATIC<span>MEDICAL</span></h2>
-<div class="creator-tag">Desenvolvido por Wenderson Ribeiro • Aluno de Medicina UFT</div>
+    <div class="welcome-box">
+        <h2>PRATIC<span>MEDICAL</span></h2>
+        <div class="creator-tag">Desenvolvido por Wenderson Ribeiro • Aluno de Medicina UFT</div>
+        
+        <div class="form-group">
+            <label>Identificação do Residente</label>
+            <input type="text" id="playerNameInput" class="input-field" placeholder="Nome do Médico Residente" value="Dr(a). Residente">
+        </div>
+        
+        <div class="form-group">
+            <label>Volume do Turno</label>
+            <select id="caseVolumeInput" class="input-field" style="cursor: pointer;">
+                <option value="3">3 Casos Clínicos</option>
+                <option value="6">6 Casos Clínicos</option>
+                <option value="18" selected>18 Casos Clínicos (Plantão Completo)</option>
+            </select>
+        </div>
 
-<div class="form-group">
-<label>Identificação do Residente</label>
-<input type="text" id="playerNameInput" class="input-field" placeholder="Nome do Médico Residente" value="Dr(a). Residente">
-</div>
+        <div class="form-group">
+            <label>Configuração do Desafio Competitivo</label>
+            <select id="plantaoTypeInput" class="input-field" style="cursor: pointer;">
+                <option value="normal" selected>Plantão Regular (Padrão)</option>
+                <option value="critico">Plantão Crítico: Sexta-Feira 13 (+50% XP / Tempo -25%)</option>
+            </select>
+        </div>
 
-<div class="form-group">
-<label>Volume do Turno</label>
-<select id="caseVolumeInput" class="input-field" style="cursor: pointer;">
-<option value="3">3 Casos Clínicos</option>
-<option value="6">6 Casos Clínicos</option>
-<option value="18" selected>18 Casos Clínicos (Plantão Completo)</option>
-</select>
-</div>
-
-<div class="form-group">
-<label>Configuração do Desafio Competitivo</label>
-<select id="plantaoTypeInput" class="input-field" style="cursor: pointer;">
-<option value="normal" selected>Plantão Regular (Padrão)</option>
-<option value="critico">Plantão Crítico: Sexta-Feira 13 (+50% XP / Tempo -25%)</option>
-</select>
-</div>
-
-<button class="btn-action" style="text-align: center; font-weight: 600; margin-top: 10px;" onclick="conectarMonitor()">🔗 Assumir Vaga na Sala Vermelha</button>
-</div>
+        <button class="btn-action" style="text-align: center; font-weight: 600; margin-top: 10px;" onclick="conectarMonitor()">🔗 Assumir Vaga na Sala Vermelha</button>
+    </div>
 </div>
 
 <div class="wrapper">
-<div class="top-bar">
-<div class="brand">PRATIC<span>MEDICAL</span></div>
-<div class="meta-info">
-<div class="badge" id="doctorNameDisplay" style="border-color: var(--neon-blue);">PLANTONISTA: --</div>
-<div class="badge badge-elo" id="eloDisplay">🏅 Interno R0</div>
-<div class="badge badge-xp" id="xpDisplay">🏆 0 XP</div>
-<div class="badge badge-mode" id="modeToggle" onclick="toggleModoAprendizado()">🧠 MODO: REALISTA</div>
-<div class="badge badge-shift" id="shiftDisplay">🌞 PLANTÃO DIURNO</div>
-<div class="badge badge-iatrogenia" id="iatrogeniaDisplay">IATROGENIAS: 0/3</div>
-<div class="badge" id="levelDisplay">NÍVEL: --</div>
-<div class="badge" id="turnDisplay">Turno --</div>
-<div class="badge badge-timer" id="timerDisplay">⏱️ 02:00</div>
-</div>
-</div>
+    <div class="top-bar">
+        <div class="brand">PRATIC<span>MEDICAL</span></div>
+        <div class="meta-info">
+            <div class="badge" id="doctorNameDisplay" style="border-color: var(--neon-blue);">PLANTONISTA: --</div>
+            <div class="badge badge-elo" id="eloDisplay">🏅 Interno R0</div>
+            <div class="badge badge-xp" id="xpDisplay">🏆 0 XP</div>
+            <div class="badge badge-mode" id="modeToggle" onclick="toggleModoAprendizado()">🧠 MODO: REALISTA</div>
+            <div class="badge badge-shift" id="shiftDisplay">🌞 PLANTÃO DIURNO</div>
+            <div class="badge badge-iatrogenia" id="iatrogeniaDisplay">IATROGENIAS: 0/3</div>
+            <div class="badge" id="levelDisplay">NÍVEL: --</div>
+            <div class="badge" id="turnDisplay">Turno --</div>
+            <div class="badge badge-timer" id="timerDisplay">⏱️ 02:00</div>
+        </div>
+    </div>
 
-<div class="dashboard">
-<div style="display: flex; flex-direction: column; gap: 15px;">
-<div class="panel">
-<div class="panel-header"><span>Caso Clínico Admissional</span><span id="caseIdDisplay">Caso --</span></div>
-<div id="patientProfile" style="font-size: 0.95rem; line-height: 1.5;"></div>
-</div>
+    <div class="dashboard">
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="panel">
+                <div class="panel-header"><span>Caso Clínico Admissional</span><span id="caseIdDisplay">Caso --</span></div>
+                <div id="patientProfile" style="font-size: 0.95rem; line-height: 1.5;"></div>
+            </div>
 
-<div class="panel">
-<div class="panel-header">Exame Físico Focado (Segmentar Clicável)</div>
-<div class="pe-grid">
-<button class="btn-pe" onclick="inspecionarSegmento('Segmento Cefálico / Pupilas')">Cabeça</button>
-<button class="btn-pe" onclick="inspecionarSegmento('Ausculta Pulmonar e Cardíaca')">Tórax</button>
-<button class="btn-pe" onclick="inspecionarSegmento('Exame Abdominal / Palpação')">Abdome</button>
-<button class="btn-pe" onclick="inspecionarSegmento('Perfusão Periférica e Pulsos')">Membros</button>
-<button class="btn-pe" onclick="inspecionarSegmento('Escala de Coma de Glasgow')">Neurológico</button>
-</div>
-</div>
+            <div class="panel">
+                <div class="panel-header">Exame Físico Focado (Segmentar Clicável)</div>
+                <div class="pe-grid">
+                    <button class="btn-pe" onclick="inspecionarSegmento('Segmento Cefálico / Pupilas')">Cabeça</button>
+                    <button class="btn-pe" onclick="inspecionarSegmento('Ausculta Pulmonar e Cardíaca')">Tórax</button>
+                    <button class="btn-pe" onclick="inspecionarSegmento('Exame Abdominal / Palpação')">Abdome</button>
+                    <button class="btn-pe" onclick="inspecionarSegmento('Perfusão Periférica e Pulsos')">Membros</button>
+                    <button class="btn-pe" onclick="inspecionarSegmento('Escala de Coma de Glasgow')">Neurológico</button>
+                </div>
+            </div>
 
-<div class="panel">
-<div class="panel-header">Monitor de Ondas Dinâmicas (Cardioscópio)</div>
-<div class="monitor-scope">
-<canvas id="ecgCanvas"></canvas>
-</div>
-</div>
+            <div class="panel">
+                <div class="panel-header">Monitor de Ondas Dinâmicas (Cardioscópio)</div>
+                <div class="monitor-scope">
+                    <canvas id="ecgCanvas"></canvas>
+                </div>
+            </div>
 
-<div class="panel">
-<div class="panel-header">Sinais Vitais Fisiológicos (Evolução Contínua)</div>
-<div class="vitals-grid">
-<div class="vital-box" id="boxPA"><div class="v-label">PRESSÃO ARTERIAL (mmHg)</div><div class="v-val" id="valPA">--/--</div></div>
-<div class="vital-box" id="boxFC"><div class="v-label">FREQUÊNCIA CARDÍACA (bpm)</div><div class="v-val" id="valFC">--</div></div>
-<div class="vital-box" id="boxFR"><div class="v-label">FREQ. RESPIRATÓRIA (irpm)</div><div class="v-val" id="valFR">--</div></div>
-<div class="vital-box" id="boxSPO2"><div class="v-label">SATURAÇÃO O₂ (%)</div><div class="v-val" id="valSPO2">--</div></div>
-</div>
-</div>
-</div>
+            <div class="panel">
+                <div class="panel-header">Sinais Vitais Fisiológicos (Evolução Contínua)</div>
+                <div class="vitals-grid">
+                    <div class="vital-box" id="boxPA"><div class="v-label">PRESSÃO ARTERIAL (mmHg)</div><div class="v-val" id="valPA">--/--</div></div>
+                    <div class="vital-box" id="boxFC"><div class="v-label">FREQUÊNCIA CARDÍACA (bpm)</div><div class="v-val" id="valFC">--</div></div>
+                    <div class="vital-box" id="boxFR"><div class="v-label">FREQ. RESPIRATÓRIA (irpm)</div><div class="v-val" id="valFR">--</div></div>
+                    <div class="vital-box" id="boxSPO2"><div class="v-label">SATURAÇÃO O₂ (%)</div><div class="v-val" id="valSPO2">--</div></div>
+                </div>
+            </div>
+        </div>
 
-<div style="display: flex; flex-direction: column; gap: 15px;">
-<div class="panel">
-<div class="panel-header">Evolução do Caso e Visualizador de Imagens</div>
-<div class="chart-box" id="chartLog"></div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div class="panel">
+                <div class="panel-header">Evolução do Caso e Visualizador de Imagens</div>
+                <div class="chart-box" id="chartLog"></div>
+                
+                <div class="exam-image-container" id="imageBox">
+                    <p class="v-label" style="margin-bottom: 5px;" id="imageTitle">IMAGEM DO EXAME</p>
+                    <img id="examImg" src="" alt="Resultado de Imagem">
+                </div>
+                
+                <div id="debriefingContainer"></div>
+            </div>
 
-<div class="exam-image-container" id="imageBox">
-<p class="v-label" style="margin-bottom: 5px;" id="imageTitle">IMAGEM DO EXAME</p>
-<img id="examImg" src="" alt="Resultado de Imagem">
-</div>
-
-<div id="debriefingContainer"></div>
-</div>
-
-<div class="panel">
-<div class="panel-header">Painel de Tomada de Decisão Médica</div>
-<div class="options-list" id="controlPanel"></div>
-</div>
-</div>
-</div>
+            <div class="panel">
+                <div class="panel-header">Painel de Tomada de Decisão Médica</div>
+                <div class="options-list" id="controlPanel"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
 const databaseCasos = [
-{
-id: 1, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "sinus",
-perfil: "<b>Paciente:</b> Mulher, 62 anos.<br><b>Queixa:</b> Dor precordial opressiva de forte intensidade há 1 hora irradiando para mandíbula.",
-vitasIniciais: { paS: 150, paD: 95, fc: 88, fr: 18, spo2: 93 },
-diagnosticoCorreto: "iam", condutaCorreta: "aas_clopi", exameOuro: "ecg",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Crepitações basais discretas bilateralmente. Bulhas rítmicas normofonéticas sem sopros.", 'Escala de Coma de Glasgow': "Glasgow 15. Orientada em tempo e espaço.", 'Segmento Cefálico / Pupilas': "Pupilas isocóricas e fotorreagentes.", 'Exame Abdominal / Palpação': "Plano, flácido, indolor à palpação.", 'Perfusão Periférica e Pulsos': "Pulsos simétricos, TEC 2 segundos." },
-imagemExame: {
-'ecg': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500',
-'rx': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=500'
-},
-dDica: "SCA com Supra exige dupla antiagregação imediata para bloquear a cascata trombótica na coronária.",
-debriefing: "A dupla antiagregação plaquetária precoce (AAS + Clopidogrel) reduz a mortalidade no IAMCSST.",
-referencia: "Diretriz de SCA com supra de ST da Sociedade Brasileira de Cardiologia (SBC), 2021.",
-logs: { init: "Admitida na Sala de Emergência com dor torácica típica.", ecg: "ECG: Supra de segmento ST de 3mm de V1 a V4 (Parede Anterior).", tropo: "Troponina I ultrassensível elevada acima do percentil 99.", errado: "Erro: Atrasar o tratamento antitrombótico aumenta a taxa de necrose miocárdica." }
-},
-{
-id: 2, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 28 anos.<br><b>Queixa:</b> Dispneia súbita e dor torácica pleurítica à direita.",
-vitasIniciais: { paS: 105, paD: 65, fc: 118, fr: 28, spo2: 87 },
-diagnosticoCorreto: "pntx", condutaCorreta: "toraco_agulha", exameOuro: "rx",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Murmúrio vesicular totalmente abolido à direita. Hiperimpanismo à percussão.", 'Escala de Coma de Glasgow': "Glasgow 14 devido à hipóxia acentuada.", 'Segmento Cefálico / Pupilas': "Turgência jugular visível a 45 graus.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Pulsos rápidos e filiformes. TEC 3 segundos." },
-imagemExame: { 'rx': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=500' },
-dDica: "O colapso mecânico por ar no espaço pleural restringe o retorno venoso de forma crítica.",
-debriefing: "A descompressão torácica imediata com agulha transforma o pneumotórax hipertensivo em simples.",
-referencia: "Manual do Advanced Trauma Life Support (ATLS), 10ª Edição.",
-logs: { init: "Paciente taquipneico. Murmúrio vesicular totalmente abolido à direita.", rx: "Raio-X: Hipertransparência à direita com desvio do mediastino para a esquerda.", errado: "Erro Crítico: Ventilar com pressão positiva antes de drenar causará PCR imediata em AESP!" }
-},
-{
-id: 3, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120, waveType: "tachy",
-perfil: "<b>Paciente:</b> Mulher, 74 anos.<br><b>Queixa:</b> Rebaixamento do nível de consciência, letargia e febre.",
-vitasIniciais: { paS: 82, paD: 44, fc: 126, fr: 26, spo2: 90 },
-diagnosticoCorreto: "sepse", condutaCorreta: "cristaloide_atb", exameOuro: "lactato",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bulhas hipofonéticas. Pulmões limpos.", 'Escala de Coma de Glasgow': "Glasgow 11 (Abertura ocular ao estímulo doloroso, confusa).", 'Segmento Cefálico / Pupilas': "Mucosas secas, desidratada.", 'Exame Abdominal / Palpação': "Punho-percussão dolorosa à direita (Sinal de Giordano +).", 'Perfusão Periférica e Pulsos': "Extremidades frias e pele marmorada. TEC 5 segundos." },
-dDica: "Expansão volêmica agressiva na primeira hora estabiliza a macrocirculação antes do início de vasopressores.",
-debriefing: "A ressuscitação volêmica precoce com cristaloides (30mL/kg) e antibiótico na primeira hora é o pilar.",
-referencia: "Guidelines da Surviving Sepsis Campaign, 2021.",
-logs: { init: "Paciente torporosa, TEC de 5 segundos, pele marmorada.", lactato: "Gasometria: Lactato arterial de 4.2 mmol/L. Acidose metabólica severa.", errado: "Erro: Iniciar droga vasoativa sem expansão volêmica prévia viola as diretrizes do Surviving Sepsis." }
-},
-{
-id: 4, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 45 anos.<br><b>Queixa:</b> Crise convulsiva tônico-clônica generalizada há 6 minutos na recepção.",
-vitasIniciais: { paS: 140, paD: 90, fc: 110, fr: 24, spo2: 89 },
-diagnosticoCorreto: "est_epiletico", condutaCorreta: "diazepam", exameOuro: "glicemia",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Roncos de transmissão.", 'Escala de Coma de Glasgow': "Glasgow 6. Pós-ictal com agitação.", 'Segmento Cefálico / Pupilas': "Pupilas isocóricas.", 'Exame Abdominal / Palpação': "Sem massas.", 'Perfusão Periférica e Pulsos': "TEC 2 seg." },
-dDica: "Aborte a atividade motora contínua de forma rápida e verifique substratos metabólicos basais.",
-debriefing: "Benzodiazepínicos atuam como agonistas de GABA-A, abortando o estado de mal epilético.",
-referencia: "Protocolo de Mal Epiléptico da ABN, 2022.",
-logs: { init: "Paciente em Estado de Mal Epiléptico.", glicemia: "Glicemia Capilar: 104 mg/dL.", errado: "Erro: Conduzir imagem antes do controle farmacológico perpetua lenão neurológica." }
-},
-{
-id: 5, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tsv",
-perfil: "<b>Paciente:</b> Mulher, 34 anos.<br><b>Queixa:</b> Palpitação súbita associada a mal-estar e tontura leve.",
-vitasIniciais: { paS: 115, paD: 70, fc: 185, fr: 20, spo2: 95 },
-diagnosticoCorreto: "tsvd", condutaCorreta: "manobra_vagal", exameOuro: "ecg",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Ritmo regular, muito taquicárdico.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "TEC 2 seg." },
-dDica: "Taquicardia regular de QRS estreito sem sinais de instabilidade responde a manobras mecânicas.",
-debriefing: "A manobra vagal aumenta o tônus parassimpático no nó AV, quebrando a reentrada.",
-referencia: "Diretriz de Arritmias Cardíacas da AHA, 2020.",
-logs: { init: "Paciente estável hemodinamicamente, taquicárdica pura.", ecg: "ECG: Taquicardia de complexo QRS estreito.", errado: "Erro: Cardioversão elétrica sincronizada imediata é para pacientes instáveis!" }
-},
-{
-id: 6, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 60, waveType: "brady",
-perfil: "<b>Paciente:</b> Homem, 68 anos.<br><b>Queixa:</b> Desmaio em casa. Agora na sala vermelha com dor torácica intensa.",
-vitasIniciais: { paS: 75, paD: 40, fc: 36, fr: 16, spo2: 91 },
-diagnosticoCorreto: "bavt", condutaCorreta: "marcapasso", exameOuro: "ecg",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bradicardia severa. Ondas 'a' em canhão no pulso venoso.", 'Escala de Coma de Glasgow': "Glasgow 13 (Torporoso).", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Pulsos finos, TEC 4 seg." },
-dDica: "Bradiarritmias com instabilidade hemodinâmica grave necessitam de cronotropismo elétrico.",
-debriefing: "Bloqueio AV Total com choque possui indicação formal de marcapasso transcutâneo.",
-referencia: "Diretriz Brasileira de Dispositivos Cardíacos Eletrônicos Implantáveis, 2023.",
-logs: { init: "Paciente chocado por bradiarritmia.", ecg: "ECG: Dissociação AV completa.", errado: "Erro: Atropina pura geralmente falha em BAVT com QRS largo." }
-},
-{
-id: 7, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 52 anos.<br><b>Queixa:</b> Dispneia grave de início súbito após longa viagem.",
-vitasIniciais: { paS: 110, paD: 70, fc: 124, fr: 28, spo2: 84 },
-diagnosticoCorreto: "tep", condutaCorreta: "anticoagulacao", exameOuro: "lactato",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Pulmões limpos.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Panturrilha direita empastada." },
-dDica: "Dispneia súbita com pulmões limpos e fatores de estase venosa indica bloqueio vascular pulmonar.",
-debriefing: "O TEP sem instabilidade requer anticoagulação precoce.",
-referencia: "Diretriz de TEP da SBC, 2022.",
-logs: { init: "Taquipneico, pulmões limpos.", lactato: "Gasometria: Hipoxemia severa.", errado: "Erro: Dar diuréticos de alça piorará o choque." }
-},
-{
-id: 8, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120, waveType: "tachy",
-perfil: "<b>Paciente:</b> Mulher, 29 anos.<br><b>Queixa:</b> Dispneia intensa, sibilos audíveis e edema labial após ingestão de camarão.",
-vitasIniciais: { paS: 78, paD: 42, fc: 132, fr: 30, spo2: 85 },
-diagnosticoCorreto: "anafilaxia", condutaCorreta: "adrenalina_im", exameOuro: "lactato",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Estridor e sibilos.", 'Escala de Coma de Glasgow': "Glasgow 15, muito agitada.", 'Segmento Cefálico / Pupilas': "Edema de glote e facial.", 'Exame Abdominal / Palpação': "N/A.", 'Perfusão Periférica e Pulsos': "Placas urticadas." },
-dDica: "Colapso circulatório por alérgenos exige vasoconstrição alfa-1 imediata.",
-debriefing: "Adrenalina IM é a droga de primeira escolha absoluta na anafilaxia.",
-referencia: "Diretriz Mundial de Anafilaxia da WAO, 2020.",
-logs: { init: "Estridor laríngeo, placas urticadas.", lactato: "Lactato: 3.1 mmol/L.", errado: "Erro: Corticoides não revertem colapso respiratório IMEDIATO!" }
-},
-{
-id: 9, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 19 anos.<br><b>Queixa:</b> Confusão mental extrema, vômitos e hálito cetônico.",
-vitasIniciais: { paS: 100, paD: 60, fc: 112, fr: 26, spo2: 96 },
-diagnosticoCorreto: "cad", condutaCorreta: "cristaloide_atb", exameOuro: "glicemia",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Respiração de Kussmaul.", 'Escala de Coma de Glasgow': "Glasgow 12.", 'Segmento Cefálico / Pupilas': "Desidratado.", 'Exame Abdominal / Palpação': "Dor difusa leve.", 'Perfusão Periférica e Pulsos': "TEC 3 seg." },
-dDica: "Acidose com hiperglicemia severa requer hidratação agressiva inicial.",
-debriefing: "A expansão volêmica agressiva restaura perfusão e reduz hormônios contra-reguladores.",
-referencia: "Diretriz da ADA, 2023.",
-logs: { init: "Desidratação grave detectada.", glicemia: "Glicemia: 485 mg/dL.", errado: "Erro: Fazer insulina intempestiva pode desencadear arritmia fatal." }
-},
-{
-id: 10, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 90, waveType: "sinus",
-perfil: "<b>Paciente:</b> Homem, 71 anos.<br><b>Queixa:</b> Cefaleia explosiva seguida de fraqueza súbita no dimídio esquerdo.",
-vitasIniciais: { paS: 220, paD: 125, fc: 94, fr: 18, spo2: 95 },
-diagnosticoCorreto: "avch", condutaCorreta: "marcapasso", exameOuro: "rx",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "B4 presente.", 'Escala de Coma de Glasgow': "Glasgow 13.", 'Segmento Cefálico / Pupilas': "Desvio conjugado do olhar.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Hemiplegia esquerda." },
-dDica: "Déficit neurológico agudo com picos pressóricos exige neuroimagem imediata.",
-debriefing: "No AVC Hemorrágico, controle rígido da PA sistólica contém o hematoma.",
-referencia: "Guidelines para AVC Hemorrágico da AHA/ASA, 2022.",
-logs: { init: "Hemiplegia esquerda com desvio ocular.", rx: "TC Simulada: Hematoma nos núcleos da base.", errado: "Erro: Trombolisar causará herniação cerebral!" }
-},
-{
-id: 11, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
-perfil: "<b>Paciente:</b> Mulher, 65 anos, diabética.<br><b>Queixa:</b> Falta de ar intensa e escarro rosado.",
-vitasIniciais: { paS: 210, paD: 120, fc: 115, fr: 32, spo2: 82 },
-diagnosticoCorreto: "eap", condutaCorreta: "toraco_agulha", exameOuro: "rx",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Estertoração crepitante disseminada.", 'Escala de Coma de Glasgow': "Glasgow 15, agitada.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Sudorese fria." },
-dDica: "Congestão maciça com picos de pós-carga responde a venodilatação.",
-debriefing: "O manejo do EAP Hipertensivo envolve redução da pós-carga e venodilatação.",
-referencia: "Diretriz de ICA da SBC, 2021.",
-logs: { init: "Estertoração crepitante. Paciente em ortopneia.", rx: "RX: Infiltrado em asa de borboleta.", errado: "Erro: Administrar volume sufocará a paciente." }
-},
-{
-id: 12, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 55 anos, etilista crônico.<br><b>Queixa:</b> Hematêmese volumosa.",
-vitasIniciais: { paS: 70, paD: 35, fc: 138, fr: 24, spo2: 91 },
-diagnosticoCorreto: "hda_varizes", condutaCorreta: "cristaloide_atb", exameOuro: "lactato",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Taquicardia severa.", 'Escala de Coma de Glasgow': "Glasgow 12.", 'Segmento Cefálico / Pupilas': "Mucosas descoradas.", 'Exame Abdominal / Palpação': "Ascite tensa.", 'Perfusão Periférica e Pulsos': "TEC > 4 seg." },
-dDica: "Hemorragia digestiva com choque exige reposição volêmica e proteção profilática imediata.",
-debriefing: "O tratamento da HDA variceal envolve expansão hídrica cuidadosa e terlipressina.",
-referencia: "Consenso SBH, 2021.",
-logs: { init: "Desorientado, pálido.", lactato: "Lactato: 5.0 mmol/L.", errado: "Erro: Encaminhar para endoscopia sem estabilizar causa PCR." }
-},
-{
-id: 13, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 33 anos.<br><b>Queixa:</b> Sudorese e tremores após cocaína.",
-vitasIniciais: { paS: 195, paD: 115, fc: 142, fr: 22, spo2: 97 },
-diagnosticoCorreto: "intox_cocaina", condutaCorreta: "diazepam", exameOuro: "ecg",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Taquicardia.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Midríase.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Sudorese profusa." },
-dDica: "Superdosagem de simpaticomiméticos requer sedação com ação central (GABA).",
-debriefing: "Benzodiazepínicos modulam o tônus central reduzindo a hiperestimulação.",
-referencia: "Diretriz de Emergências Toxicológicas, 2020.",
-logs: { init: "Agitação psicomotora.", ecg: "ECG: Taquicardia sinusal.", errado: "Erro: Beta-bloqueador isolado causa tempestade alfa!" }
-},
-{
-id: 14, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 60, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 61 anos, pós-operatório de revasc.<br><b>Queixa:</b> Hipotensão refratária.",
-vitasIniciais: { paS: 72, paD: 40, fc: 128, fr: 26, spo2: 89 },
-diagnosticoCorreto: "tamponamento", condutaCorreta: "toraco_agulha", exameOuro: "rx",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bulhas abafadas.", 'Escala de Coma de Glasgow': "Glasgow 13.", 'Segmento Cefálico / Pupilas': "Turgência jugular.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Pulso paradoxal." },
-dDica: "Tríade de Beck indica restrição mecânica do coração.",
-debriefing: "O tamponamento responde a punção de alívio.",
-referencia: "Tratado de Cirurgia Cardiovascular, 2022.",
-logs: { init: "Bulhas hipofonéticas.", rx: "Raio-X: Coração em moringa.", errado: "Erro: Tratar com vasopressor não altera o desfecho." }
-},
-{
-id: 15, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "sinus",
-perfil: "<b>Paciente:</b> Mulher, 41 anos.<br><b>Queixa:</b> Fraqueza muscular ascendente flácida.",
-vitasIniciais: { paS: 110, paD: 70, fc: 98, fr: 29, spo2: 86 },
-diagnosticoCorreto: "gbs", condutaCorreta: "adrenalina_im", exameOuro: "glicemia",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Murmúrio diminuído.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Força grau II em MMII." },
-dDica: "Fraqueza neuromuscular com hipoxemia exige suporte ventilatório invasivo definitivo.",
-debriefing: "SGB com falência diafragmática requer intubação precoce.",
-referencia: "PCDT Neurologia, 2021.",
-logs: { init: "Uso de musculatura acessória.", glicemia: "Glicemia 98 mg/dL.", errado: "Erro: Adiar IOT causa PCR por hipóxia." }
-},
-{
-id: 16, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "brady",
-perfil: "<b>Paciente:</b> Homem, 25 anos.<br><b>Queixa:</b> Sonolência grave, suspeita de overdose.",
-vitasIniciais: { paS: 90, paD: 55, fc: 54, fr: 6, spo2: 78 },
-diagnosticoCorreto: "overdose_opioide", condutaCorreta: "diazepam", exameOuro: "glicemia",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bradipneia.", 'Escala de Coma de Glasgow': "Glasgow 8.", 'Segmento Cefálico / Pupilas': "Miose puntiforme.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Cianose." },
-dDica: "Depressão respiratória grave com miose responde a antagonistas mu.",
-debriefing: "Intoxicação por opioides exige antagonistas específicos (Naloxona).",
-referencia: "Manual de Toxicologia Clínica, 2020.",
-logs: { init: "Bradipneia crítica.", glicemia: "Glicemia 112 mg/dL.", errado: "Erro: Flumazenil não reverte opioides." }
-},
-{
-id: 17, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120, waveType: "brady",
-perfil: "<b>Paciente:</b> Mulher, 59 anos, dialítica.<br><b>Queixa:</b> Fraqueza e palpitações.",
-vitasIniciais: { paS: 105, paD: 60, fc: 48, fr: 20, spo2: 94 },
-diagnosticoCorreto: "hipercalemia", condutaCorreta: "marcapasso", exameOuro: "ecg",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bradicardia.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Astenia." },
-dDica: "Ondas T em tenda exigem estabilização da membrana.",
-debriefing: "Gluconato de Cálcio estabiliza o miócito e previne arritmias.",
-referencia: "Emergências Nefrológicas SBN, 2022.",
-logs: { init: "Astenia muscular profunda.", ecg: "ECG: Ondas T apiculadas ('em tenda').", errado: "Erro: Atrasar Cálcio EV em vigência de ECG alterado expõe a PCR." }
-},
-{
-id: 18, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
-perfil: "<b>Paciente:</b> Homem, 37 anos.<br><b>Queixa:</b> Febre alta há 3 dias, rigidez de nuca.",
-vitasIniciais: { paS: 125, paD: 80, fc: 104, fr: 22, spo2: 96 },
-diagnosticoCorreto: "meningite", condutaCorreta: "cristaloide_atb", exameOuro: "glicemia",
-exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Taquicardia.", 'Escala de Coma de Glasgow': "Glasgow 14.", 'Segmento Cefálico / Pupilas': "Rigidez de nuca, fotofobia.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Febre palpável." },
-dDica: "Neuroinfecção exige ATB empírico IMEDIATO.",
-debriefing: "Cada minuto de atraso no ATB eleva sequelas e óbito.",
-referencia: "Guia MS, 2022.",
-logs: { init: "Sinal de Brudzinski e Kernig positivos.", glicemia: "Glicemia 99 mg/dL.", errado: "Erro: Postergar a primeira dose de ATB aumenta a mortalidade." }
-}
+    {
+        id: 1, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "sinus",
+        perfil: "<b>Paciente:</b> Mulher, 62 anos.<br><b>Queixa:</b> Dor precordial opressiva de forte intensidade há 1 hora irradiando para mandíbula.",
+        vitasIniciais: { paS: 150, paD: 95, fc: 88, fr: 18, spo2: 93 },
+        diagnosticoCorreto: "iam", condutaCorreta: "aas_clopi", exameOuro: "ecg",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Crepitações basais discretas bilateralmente. Bulhas rítmicas normofonéticas sem sopros.", 'Escala de Coma de Glasgow': "Glasgow 15. Orientada em tempo e espaço.", 'Segmento Cefálico / Pupilas': "Pupilas isocóricas e fotorreagentes.", 'Exame Abdominal / Palpação': "Plano, flácido, indolor à palpação.", 'Perfusão Periférica e Pulsos': "Pulsos simétricos, TEC 2 segundos." },
+        imagemExame: {
+            'ecg': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500', 
+            'rx': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=500'
+        },
+        dDica: "SCA com Supra exige dupla antiagregação imediata para bloquear a cascata trombótica na coronária.",
+        debriefing: "A dupla antiagregação plaquetária precoce (AAS + Clopidogrel) reduz a mortalidade no IAMCSST.",
+        referencia: "Diretriz de SCA com supra de ST da Sociedade Brasileira de Cardiologia (SBC), 2021.",
+        logs: { init: "Admitida na Sala de Emergência com dor torácica típica.", ecg: "ECG: Supra de segmento ST de 3mm de V1 a V4 (Parede Anterior).", tropo: "Troponina I ultrassensível elevada acima do percentil 99.", errado: "Erro: Atrasar o tratamento antitrombótico aumenta a taxa de necrose miocárdica." }
+    },
+    {
+        id: 2, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 28 anos.<br><b>Queixa:</b> Dispneia súbita e dor torácica pleurítica à direita.",
+        vitasIniciais: { paS: 105, paD: 65, fc: 118, fr: 28, spo2: 87 },
+        diagnosticoCorreto: "pntx", condutaCorreta: "toraco_agulha", exameOuro: "rx",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Murmúrio vesicular totalmente abolido à direita. Hiperimpanismo à percussão.", 'Escala de Coma de Glasgow': "Glasgow 14 devido à hipóxia acentuada.", 'Segmento Cefálico / Pupilas': "Turgência jugular visível a 45 graus.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Pulsos rápidos e filiformes. TEC 3 segundos." },
+        imagemExame: { 'rx': 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=500' },
+        dDica: "O colapso mecânico por ar no espaço pleural restringe o retorno venoso de forma crítica.",
+        debriefing: "A descompressão torácica imediata com agulha transforma o pneumotórax hipertensivo em simples.",
+        referencia: "Manual do Advanced Trauma Life Support (ATLS), 10ª Edição.",
+        logs: { init: "Paciente taquipneico. Murmúrio vesicular totalmente abolido à direita.", rx: "Raio-X: Hipertransparência à direita com desvio do mediastino para a esquerda.", errado: "Erro Crítico: Ventilar com pressão positiva antes de drenar causará PCR imediata em AESP!" }
+    },
+    {
+        id: 3, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Mulher, 74 anos.<br><b>Queixa:</b> Rebaixamento do nível de consciência, letargia e febre.",
+        vitasIniciais: { paS: 82, paD: 44, fc: 126, fr: 26, spo2: 90 },
+        diagnosticoCorreto: "sepse", condutaCorreta: "cristaloide_atb", exameOuro: "lactato",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bulhas hipofonéticas. Pulmões limpos.", 'Escala de Coma de Glasgow': "Glasgow 11 (Abertura ocular ao estímulo doloroso, confusa).", 'Segmento Cefálico / Pupilas': "Mucosas secas, desidratada.", 'Exame Abdominal / Palpação': "Punho-percussão dolorosa à direita (Sinal de Giordano +).", 'Perfusão Periférica e Pulsos': "Extremidades frias e pele marmorada. TEC 5 segundos." },
+        dDica: "Expansão volêmica agressiva na primeira hora estabiliza a macrocirculação antes do início de vasopressores.",
+        debriefing: "A ressuscitação volêmica precoce com cristaloides (30mL/kg) e antibiótico na primeira hora é o pilar.",
+        referencia: "Guidelines da Surviving Sepsis Campaign, 2021.",
+        logs: { init: "Paciente torporosa, TEC de 5 segundos, pele marmorada.", lactato: "Gasometria: Lactato arterial de 4.2 mmol/L. Acidose metabólica severa.", errado: "Erro: Iniciar droga vasoativa sem expansão volêmica prévia viola as diretrizes do Surviving Sepsis." }
+    },
+    {
+        id: 4, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 45 anos.<br><b>Queixa:</b> Crise convulsiva tônico-clônica generalizada há 6 minutos na recepção.",
+        vitasIniciais: { paS: 140, paD: 90, fc: 110, fr: 24, spo2: 89 },
+        diagnosticoCorreto: "est_epiletico", condutaCorreta: "diazepam", exameOuro: "glicemia",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Roncos de transmissão.", 'Escala de Coma de Glasgow': "Glasgow 6. Pós-ictal com agitação.", 'Segmento Cefálico / Pupilas': "Pupilas isocóricas.", 'Exame Abdominal / Palpação': "Sem massas.", 'Perfusão Periférica e Pulsos': "TEC 2 seg." },
+        dDica: "Aborte a atividade motora contínua de forma rápida e verifique substratos metabólicos basais.",
+        debriefing: "Benzodiazepínicos atuam como agonistas de GABA-A, abortando o estado de mal epilético.",
+        referencia: "Protocolo de Mal Epiléptico da ABN, 2022.",
+        logs: { init: "Paciente em Estado de Mal Epiléptico.", glicemia: "Glicemia Capilar: 104 mg/dL.", errado: "Erro: Conduzir imagem antes do controle farmacológico perpetua lenão neurológica." }
+    },
+    {
+        id: 5, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tsv",
+        perfil: "<b>Paciente:</b> Mulher, 34 anos.<br><b>Queixa:</b> Palpitação súbita associada a mal-estar e tontura leve.",
+        vitasIniciais: { paS: 115, paD: 70, fc: 185, fr: 20, spo2: 95 },
+        diagnosticoCorreto: "tsvd", condutaCorreta: "manobra_vagal", exameOuro: "ecg",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Ritmo regular, muito taquicárdico.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "TEC 2 seg." },
+        dDica: "Taquicardia regular de QRS estreito sem sinais de instabilidade responde a manobras mecânicas.",
+        debriefing: "A manobra vagal aumenta o tônus parassimpático no nó AV, quebrando a reentrada.",
+        referencia: "Diretriz de Arritmias Cardíacas da AHA, 2020.",
+        logs: { init: "Paciente estável hemodinamicamente, taquicárdica pura.", ecg: "ECG: Taquicardia de complexo QRS estreito.", errado: "Erro: Cardioversão elétrica sincronizada imediata é para pacientes instáveis!" }
+    },
+    {
+        id: 6, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 60, waveType: "brady",
+        perfil: "<b>Paciente:</b> Homem, 68 anos.<br><b>Queixa:</b> Desmaio em casa. Agora na sala vermelha com dor torácica intensa.",
+        vitasIniciais: { paS: 75, paD: 40, fc: 36, fr: 16, spo2: 91 },
+        diagnosticoCorreto: "bavt", condutaCorreta: "marcapasso", exameOuro: "ecg",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bradicardia severa. Ondas 'a' em canhão no pulso venoso.", 'Escala de Coma de Glasgow': "Glasgow 13 (Torporoso).", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Pulsos finos, TEC 4 seg." },
+        dDica: "Bradiarritmias com instabilidade hemodinâmica grave necessitam de cronotropismo elétrico.",
+        debriefing: "Bloqueio AV Total com choque possui indicação formal de marcapasso transcutâneo.",
+        referencia: "Diretriz Brasileira de Dispositivos Cardíacos Eletrônicos Implantáveis, 2023.",
+        logs: { init: "Paciente chocado por bradiarritmia.", ecg: "ECG: Dissociação AV completa.", errado: "Erro: Atropina pura geralmente falha em BAVT com QRS largo." }
+    },
+    {
+        id: 7, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 52 anos.<br><b>Queixa:</b> Dispneia grave de início súbito após longa viagem.",
+        vitasIniciais: { paS: 110, paD: 70, fc: 124, fr: 28, spo2: 84 },
+        diagnosticoCorreto: "tep", condutaCorreta: "anticoagulacao", exameOuro: "lactato",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Pulmões limpos.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Panturrilha direita empastada." },
+        dDica: "Dispneia súbita com pulmões limpos e fatores de estase venosa indica bloqueio vascular pulmonar.",
+        debriefing: "O TEP sem instabilidade requer anticoagulação precoce.",
+        referencia: "Diretriz de TEP da SBC, 2022.",
+        logs: { init: "Taquipneico, pulmões limpos.", lactato: "Gasometria: Hipoxemia severa.", errado: "Erro: Dar diuréticos de alça piorará o choque." }
+    },
+    {
+        id: 8, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Mulher, 29 anos.<br><b>Queixa:</b> Dispneia intensa, sibilos audíveis e edema labial após ingestão de camarão.",
+        vitasIniciais: { paS: 78, paD: 42, fc: 132, fr: 30, spo2: 85 },
+        diagnosticoCorreto: "anafilaxia", condutaCorreta: "adrenalina_im", exameOuro: "lactato",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Estridor e sibilos.", 'Escala de Coma de Glasgow': "Glasgow 15, muito agitada.", 'Segmento Cefálico / Pupilas': "Edema de glote e facial.", 'Exame Abdominal / Palpação': "N/A.", 'Perfusão Periférica e Pulsos': "Placas urticadas." },
+        dDica: "Colapso circulatório por alérgenos exige vasoconstrição alfa-1 imediata.",
+        debriefing: "Adrenalina IM é a droga de primeira escolha absoluta na anafilaxia.",
+        referencia: "Diretriz Mundial de Anafilaxia da WAO, 2020.",
+        logs: { init: "Estridor laríngeo, placas urticadas.", lactato: "Lactato: 3.1 mmol/L.", errado: "Erro: Corticoides não revertem colapso respiratório IMEDIATO!" }
+    },
+    {
+        id: 9, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 19 anos.<br><b>Queixa:</b> Confusão mental extrema, vômitos e hálito cetônico.",
+        vitasIniciais: { paS: 100, paD: 60, fc: 112, fr: 26, spo2: 96 },
+        diagnosticoCorreto: "cad", condutaCorreta: "cristaloide_atb", exameOuro: "glicemia",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Respiração de Kussmaul.", 'Escala de Coma de Glasgow': "Glasgow 12.", 'Segmento Cefálico / Pupilas': "Desidratado.", 'Exame Abdominal / Palpação': "Dor difusa leve.", 'Perfusão Periférica e Pulsos': "TEC 3 seg." },
+        dDica: "Acidose com hiperglicemia severa requer hidratação agressiva inicial.",
+        debriefing: "A expansão volêmica agressiva restaura perfusão e reduz hormônios contra-reguladores.",
+        referencia: "Diretriz da ADA, 2023.",
+        logs: { init: "Desidratação grave detectada.", glicemia: "Glicemia: 485 mg/dL.", errado: "Erro: Fazer insulina intempestiva pode desencadear arritmia fatal." }
+    },
+    {
+        id: 10, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 90, waveType: "sinus",
+        perfil: "<b>Paciente:</b> Homem, 71 anos.<br><b>Queixa:</b> Cefaleia explosiva seguida de fraqueza súbita no dimídio esquerdo.",
+        vitasIniciais: { paS: 220, paD: 125, fc: 94, fr: 18, spo2: 95 },
+        diagnosticoCorreto: "avch", condutaCorreta: "marcapasso", exameOuro: "rx",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "B4 presente.", 'Escala de Coma de Glasgow': "Glasgow 13.", 'Segmento Cefálico / Pupilas': "Desvio conjugado do olhar.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Hemiplegia esquerda." },
+        dDica: "Déficit neurológico agudo com picos pressóricos exige neuroimagem imediata.",
+        debriefing: "No AVC Hemorrágico, controle rígido da PA sistólica contém o hematoma.",
+        referencia: "Guidelines para AVC Hemorrágico da AHA/ASA, 2022.",
+        logs: { init: "Hemiplegia esquerda com desvio ocular.", rx: "TC Simulada: Hematoma nos núcleos da base.", errado: "Erro: Trombolisar causará herniação cerebral!" }
+    },
+    {
+        id: 11, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Mulher, 65 anos, diabética.<br><b>Queixa:</b> Falta de ar intensa e escarro rosado.",
+        vitasIniciais: { paS: 210, paD: 120, fc: 115, fr: 32, spo2: 82 },
+        diagnosticoCorreto: "eap", condutaCorreta: "toraco_agulha", exameOuro: "rx",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Estertoração crepitante disseminada.", 'Escala de Coma de Glasgow': "Glasgow 15, agitada.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Sudorese fria." },
+        dDica: "Congestão maciça com picos de pós-carga responde a venodilatação.",
+        debriefing: "O manejo do EAP Hipertensivo envolve redução da pós-carga e venodilatação.",
+        referencia: "Diretriz de ICA da SBC, 2021.",
+        logs: { init: "Estertoração crepitante. Paciente em ortopneia.", rx: "RX: Infiltrado em asa de borboleta.", errado: "Erro: Administrar volume sufocará a paciente." }
+    },
+    {
+        id: 12, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 55 anos, etilista crônico.<br><b>Queixa:</b> Hematêmese volumosa.",
+        vitasIniciais: { paS: 70, paD: 35, fc: 138, fr: 24, spo2: 91 },
+        diagnosticoCorreto: "hda_varizes", condutaCorreta: "cristaloide_atb", exameOuro: "lactato",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Taquicardia severa.", 'Escala de Coma de Glasgow': "Glasgow 12.", 'Segmento Cefálico / Pupilas': "Mucosas descoradas.", 'Exame Abdominal / Palpação': "Ascite tensa.", 'Perfusão Periférica e Pulsos': "TEC > 4 seg." },
+        dDica: "Hemorragia digestiva com choque exige reposição volêmica e proteção profilática imediata.",
+        debriefing: "O tratamento da HDA variceal envolve expansão hídrica cuidadosa e terlipressina.",
+        referencia: "Consenso SBH, 2021.",
+        logs: { init: "Desorientado, pálido.", lactato: "Lactato: 5.0 mmol/L.", errado: "Erro: Encaminhar para endoscopia sem estabilizar causa PCR." }
+    },
+    {
+        id: 13, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 33 anos.<br><b>Queixa:</b> Sudorese e tremores após cocaína.",
+        vitasIniciais: { paS: 195, paD: 115, fc: 142, fr: 22, spo2: 97 },
+        diagnosticoCorreto: "intox_cocaina", condutaCorreta: "diazepam", exameOuro: "ecg",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Taquicardia.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Midríase.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Sudorese profusa." },
+        dDica: "Superdosagem de simpaticomiméticos requer sedação com ação central (GABA).",
+        debriefing: "Benzodiazepínicos modulam o tônus central reduzindo a hiperestimulação.",
+        referencia: "Diretriz de Emergências Toxicológicas, 2020.",
+        logs: { init: "Agitação psicomotora.", ecg: "ECG: Taquicardia sinusal.", errado: "Erro: Beta-bloqueador isolado causa tempestade alfa!" }
+    },
+    {
+        id: 14, nivel: "COMPLEXO", maxTurnos: 4, tempoLimite: 60, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 61 anos, pós-operatório de revasc.<br><b>Queixa:</b> Hipotensão refratária.",
+        vitasIniciais: { paS: 72, paD: 40, fc: 128, fr: 26, spo2: 89 },
+        diagnosticoCorreto: "tamponamento", condutaCorreta: "toraco_agulha", exameOuro: "rx",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bulhas abafadas.", 'Escala de Coma de Glasgow': "Glasgow 13.", 'Segmento Cefálico / Pupilas': "Turgência jugular.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Pulso paradoxal." },
+        dDica: "Tríade de Beck indica restrição mecânica do coração.",
+        debriefing: "O tamponamento responde a punção de alívio.",
+        referencia: "Tratado de Cirurgia Cardiovascular, 2022.",
+        logs: { init: "Bulhas hipofonéticas.", rx: "Raio-X: Coração em moringa.", errado: "Erro: Tratar com vasopressor não altera o desfecho." }
+    },
+    {
+        id: 15, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "sinus",
+        perfil: "<b>Paciente:</b> Mulher, 41 anos.<br><b>Queixa:</b> Fraqueza muscular ascendente flácida.",
+        vitasIniciais: { paS: 110, paD: 70, fc: 98, fr: 29, spo2: 86 },
+        diagnosticoCorreto: "gbs", condutaCorreta: "adrenalina_im", exameOuro: "glicemia",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Murmúrio diminuído.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Força grau II em MMII." },
+        dDica: "Fraqueza neuromuscular com hipoxemia exige suporte ventilatório invasivo definitivo.",
+        debriefing: "SGB com falência diafragmática requer intubação precoce.",
+        referencia: "PCDT Neurologia, 2021.",
+        logs: { init: "Uso de musculatura acessória.", glicemia: "Glicemia 98 mg/dL.", errado: "Erro: Adiar IOT causa PCR por hipóxia." }
+    },
+    {
+        id: 16, nivel: "FÁCIL", maxTurnos: 4, tempoLimite: 120, waveType: "brady",
+        perfil: "<b>Paciente:</b> Homem, 25 anos.<br><b>Queixa:</b> Sonolência grave, suspeita de overdose.",
+        vitasIniciais: { paS: 90, paD: 55, fc: 54, fr: 6, spo2: 78 },
+        diagnosticoCorreto: "overdose_opioide", condutaCorreta: "diazepam", exameOuro: "glicemia",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bradipneia.", 'Escala de Coma de Glasgow': "Glasgow 8.", 'Segmento Cefálico / Pupilas': "Miose puntiforme.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Cianose." },
+        dDica: "Depressão respiratória grave com miose responde a antagonistas mu.",
+        debriefing: "Intoxicação por opioides exige antagonistas específicos (Naloxona).",
+        referencia: "Manual de Toxicologia Clínica, 2020.",
+        logs: { init: "Bradipneia crítica.", glicemia: "Glicemia 112 mg/dL.", errado: "Erro: Flumazenil não reverte opioides." }
+    },
+    {
+        id: 17, nivel: "COMPLEXO", maxTurnos: 5, tempoLimite: 120, waveType: "brady",
+        perfil: "<b>Paciente:</b> Mulher, 59 anos, dialítica.<br><b>Queixa:</b> Fraqueza e palpitações.",
+        vitasIniciais: { paS: 105, paD: 60, fc: 48, fr: 20, spo2: 94 },
+        diagnosticoCorreto: "hipercalemia", condutaCorreta: "marcapasso", exameOuro: "ecg",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Bradicardia.", 'Escala de Coma de Glasgow': "Glasgow 15.", 'Segmento Cefálico / Pupilas': "Sem alterações.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Astenia." },
+        dDica: "Ondas T em tenda exigem estabilização da membrana.",
+        debriefing: "Gluconato de Cálcio estabiliza o miócito e previne arritmias.",
+        referencia: "Emergências Nefrológicas SBN, 2022.",
+        logs: { init: "Astenia muscular profunda.", ecg: "ECG: Ondas T apiculadas ('em tenda').", errado: "Erro: Atrasar Cálcio EV em vigência de ECG alterado expõe a PCR." }
+    },
+    {
+        id: 18, nivel: "MÉDIO", maxTurnos: 4, tempoLimite: 90, waveType: "tachy",
+        perfil: "<b>Paciente:</b> Homem, 37 anos.<br><b>Queixa:</b> Febre alta há 3 dias, rigidez de nuca.",
+        vitasIniciais: { paS: 125, paD: 80, fc: 104, fr: 22, spo2: 96 },
+        diagnosticoCorreto: "meningite", condutaCorreta: "cristaloide_atb", exameOuro: "glicemia",
+        exameFisico: { 'Ausculta Pulmonar e Cardíaca': "Taquicardia.", 'Escala de Coma de Glasgow': "Glasgow 14.", 'Segmento Cefálico / Pupilas': "Rigidez de nuca, fotofobia.", 'Exame Abdominal / Palpação': "Indolor.", 'Perfusão Periférica e Pulsos': "Febre palpável." },
+        dDica: "Neuroinfecção exige ATB empírico IMEDIATO.",
+        debriefing: "Cada minuto de atraso no ATB eleva sequelas e óbito.",
+        referencia: "Guia MS, 2022.",
+        logs: { init: "Sinal de Brudzinski e Kernig positivos.", glicemia: "Glicemia 99 mg/dL.", errado: "Erro: Postergar a primeira dose de ATB aumenta a mortalidade." }
+    }
 ];
 
 let casoAtualIndex = 0;
 let maxCasosSelecionados = 18;
-let pontuacaoTotal = 0;
+let pontuacaoTotal = 0; 
 let gameState = {};
 let timerInterval = null;
 let physiologicalInterval = null;
@@ -410,240 +409,425 @@ let animationFrameId = null;
 let canvasX = 0;
 
 function obterElo(xp) {
-if (xp <= 1000) return "🟢 Interno R0";
-if (xp <= 3000) return "🔵 Residente R1";
-if (xp <= 6000) return "🟡 Residente R3";
-return "🔴 Preceptor";
+    if (xp <= 1000) return "🟢 Interno R0";
+    if (xp <= 3000) return "🔵 Residente R1";
+    if (xp <= 6000) return "🟡 Residente R3";
+    return "🔴 Preceptor";
 }
 
 function atualizarEloUI() {
-document.getElementById('eloDisplay').innerText = 🏅 ${obterElo(pontuacaoTotal)}`;
+    document.getElementById('eloDisplay').innerText = `🏅 ${obterElo(pontuacaoTotal)}`;
 }
 
 function initCanvas() {
-canvas = document.getElementById('ecgCanvas');
-if (!canvas) return;
-ctx = canvas.getContext('2d');
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+    canvas = document.getElementById('ecgCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 }
 
 function resizeCanvas() {
-if (!canvas) return;
-canvas.width = canvas.parentElement.clientWidth;
-canvas.height = canvas.parentElement.clientHeight;
+    if (!canvas) return;
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
 }
 
 function drawECG() {
-if (!canvas || !ctx) return;
-if (gameState.concluido) {
-ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-return;
-}
+    if (!canvas || !ctx) return;
+    if (gameState.concluido) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+    
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "var(--neon-green)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(canvasX, canvas.height / 2);
 
-ctx.strokeStyle = "var(--neon-green)";
-ctx.lineWidth = 2.5;
-ctx.beginPath();
-ctx.moveTo(canvasX, canvas.height / 2);
+    let speed = Math.round((gameState.fc / 60) * 3);
+    canvasX += speed;
+    if (canvasX > canvas.width) canvasX = 0;
 
-let speed = Math.round((gameState.fc / 60) * 3);
-canvasX += speed;
-if (canvasX > canvas.width) canvasX = 0;
+    let y = canvas.height / 2;
+    let cycle = canvasX % 120;
 
-let y = canvas.height / 2;
-let cycle = canvasX % 120;
+    if (gameState.dados.waveType === "tsv") {
+        if (cycle > 20 && cycle < 25) y -= 30; 
+        if (cycle >= 25 && cycle < 28) y += 10;
+    } else if (gameState.dados.waveType === "brady") {
+        let slowCycle = canvasX % 240;
+        if (slowCycle > 40 && slowCycle < 48) y -= 6; 
+        if (slowCycle > 80 && slowCycle < 92) y -= 35; 
+        if (slowCycle > 92 && slowCycle < 100) y += 12;
+        if (slowCycle > 130 && slowCycle < 155) y -= 15; 
+    } else { 
+        if (cycle > 30 && cycle < 38) y -= 5; 
+        if (cycle > 50 && cycle < 56) y -= 32; 
+        if (cycle > 56 && cycle < 60) y += 10;
+        if (cycle > 80 && cycle < 98) y -= 6; 
+    }
 
-if (gameState.dados.waveType === "tsv") {
-if (cycle > 20 && cycle < 25) y -= 30;
-if (cycle >= 25 && cycle < 28) y += 10;
-} else if (gameState.dados.waveType === "brady") {
-let slowCycle = canvasX % 240;
-if (slowCycle > 40 && slowCycle < 48) y -= 6;
-if (slowCycle > 80 && slowCycle < 92) y -= 35;
-if (slowCycle > 92 && slowCycle < 100) y += 12;
-if (slowCycle > 130 && slowCycle < 155) y -= 15;
-} else {
-if (cycle > 30 && cycle < 38) y -= 5;
-if (cycle > 50 && cycle < 56) y -= 32;
-if (cycle > 56 && cycle < 60) y += 10;
-if (cycle > 80 && cycle < 98) y -= 6;
-}
-
-ctx.lineTo(canvasX, y);
-ctx.stroke();
-animationFrameId = requestAnimationFrame(drawECG);
+    ctx.lineTo(canvasX, y);
+    ctx.stroke();
+    animationFrameId = requestAnimationFrame(drawECG);
 }
 
 function conectarMonitor() {
-const nomeInput = document.getElementById('playerNameInput').value.trim();
-maxCasosSelecionados = parseInt(document.getElementById('caseVolumeInput').value);
-isPlantaoCritico = document.getElementById('plantaoTypeInput').value === 'critico';
-
-document.getElementById('doctorNameDisplay').innerText = PLANTONISTA:${nomeInput || "Dr(a). Residente"}`;
-atualizarEloUI();
-document.getElementById('welcomeOverlay').style.display = 'none';
-
-initCanvas();
-carregarCaso(casoAtualIndex);
+    const nomeInput = document.getElementById('playerNameInput').value.trim();
+    maxCasosSelecionados = parseInt(document.getElementById('caseVolumeInput').value);
+    isPlantaoCritico = document.getElementById('plantaoTypeInput').value === 'critico';
+    
+    document.getElementById('doctorNameDisplay').innerText = `PLANTONISTA: ${nomeInput || "Dr(a). Residente"}`;
+    atualizarEloUI();
+    document.getElementById('welcomeOverlay').style.display = 'none';
+    
+    initCanvas();
+    carregarCaso(casoAtualIndex);
 }
 
 function startPhysiologicalEngine() {
-if (physiologicalInterval) clearInterval(physiologicalInterval);
-physiologicalInterval = setInterval(() => {
-if (gameState.concluido) return;
+    if (physiologicalInterval) clearInterval(physiologicalInterval);
+    physiologicalInterval = setInterval(() => {
+        if (gameState.concluido) return;
 
-if (!gameState.medicacoesFeitas.includes(gameState.dados.condutaCorreta)) {
-gameState.fc += 1;
-gameState.paS -= 1;
-if (gameState.turno > 2) gameState.spo2 = Math.max(75, gameState.spo2 - 1);
-
-if (gameState.tempoRestante === 60) {
-pushLog("[ALERTA MONITOR]: Paciente está evoluindo com sudorese fria intensa e agitação.", "alert");
-}
-if (gameState.tempoRestante === 30) {
-pushLog("[ALERTA CRÍTICO]: Paciente rebaixando nível de consciência e entrando em torpor.", "error");
-gameState.fr += 4;
-}
-atualizarMonitores();
-}
-}, 4000);
+        if (!gameState.medicacoesFeitas.includes(gameState.dados.condutaCorreta)) {
+            gameState.fc += 1;
+            gameState.paS -= 1;
+            if (gameState.turno > 2) gameState.spo2 = Math.max(75, gameState.spo2 - 1);
+            
+            if (gameState.tempoRestante === 60) {
+                pushLog("[ALERTA MONITOR]: Paciente está evoluindo com sudorese fria intensa e agitação.", "alert");
+            }
+            if (gameState.tempoRestante === 30) {
+                pushLog("[ALERTA CRÍTICO]: Paciente rebaixando nível de consciência e entrando em torpor.", "error");
+                gameState.fr += 4;
+            }
+            atualizarMonitores();
+        }
+    }, 4000);
 }
 
 function inspecionarSegmento(segmento) {
-if (gameState.concluido) return;
-let resposta = (gameState.dados.exameFisico && gameState.dados.exameFisico[segmento]) ? gameState.dados.exameFisico[segmento] : "Sem alterações agudas identificáveis.";
-pushLog([EXAME FÍSICO - ${segmento}]: ${resposta}, "info");
-playBip(600, 0.05);
+    if (gameState.concluido) return;
+    let resposta = (gameState.dados.exameFisico && gameState.dados.exameFisico[segmento]) ? gameState.dados.exameFisico[segmento] : "Sem alterações agudas identificáveis.";
+    pushLog(`[EXAME FÍSICO - ${segmento}]: ${resposta}`, "info");
+    playBip(600, 0.05);
 }
 
 function toggleModoAprendizado() {
-modoAprendizado = !modoAprendizado;
-document.getElementById('modeToggle').innerText = modoAprendizado ? "🧠 MODO: APRENDIZADO" : "🧠 MODO: REALISTA";
-document.getElementById('modeToggle').style.borderColor = modoAprendizado ? "var(--neon-green)" : "var(--neon-blue)";
-document.getElementById('modeToggle').style.color = modoAprendizado ? "var(--neon-green)" : "var(--neon-blue)";
+    modoAprendizado = !modoAprendizado;
+    document.getElementById('modeToggle').innerText = modoAprendizado ? "🧠 MODO: APRENDIZADO" : "🧠 MODO: REALISTA";
+    document.getElementById('modeToggle').style.borderColor = modoAprendizado ? "var(--neon-green)" : "var(--neon-blue)";
+    document.getElementById('modeToggle').style.color = modoAprendizado ? "var(--neon-green)" : "var(--neon-blue)";
 }
 
 function initAudio() {
-if (!audioCtx) {
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-audioCtx = new AudioContext();
-}
-if (audioCtx.state === 'suspended') {
-audioCtx.resume();
-}
-startBipLoop();
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    startBipLoop();
 }
 
 function startBipLoop() {
-if (pBipInterval) clearInterval(pBipInterval);
-pBipInterval = setInterval(() => {
-if (gameState.concluido) return;
-playBip(gameState.fc > 125 || gameState.paS < 90 ? 820 : 440, 0.08);
-}, Math.max(300, (60 / gameState.fc) * 1000));
+    if (pBipInterval) clearInterval(pBipInterval);
+    pBipInterval = setInterval(() => {
+        if (gameState.concluido) return;
+        playBip(gameState.fc > 125 || gameState.paS < 90 ? 820 : 440, 0.08);
+    }, Math.max(300, (60 / gameState.fc) * 1000));
 }
 
 function playBip(freq, duration) {
-try {
-if (!audioCtx) return;
-let osc = audioCtx.createOscillator();
-let gain = audioCtx.createGain();
-osc.type = 'sine';
-osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-osc.connect(gain); gain.connect(audioCtx.destination);
-osc.start(); osc.stop(audioCtx.currentTime + duration);
-} catch (e) {}
+    try {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
 }
 
 function carregarCaso(index) {
-clearInterval(timerInterval);
-if (physiologicalInterval) clearInterval(physiologicalInterval);
-document.getElementById('debriefingContainer').innerHTML = "";
-document.getElementById('imageBox').style.display = "none";
+    clearInterval(timerInterval);
+    if (physiologicalInterval) clearInterval(physiologicalInterval);
+    document.getElementById('debriefingContainer').innerHTML = "";
+    document.getElementById('imageBox').style.display = "none";
+    
+    const dados = databaseCasos[index] || databaseCasos[0];
 
-const dados = databaseCasos[index] || databaseCasos[0];
+    let tempoCalculado = dados.tempoLimite;
+    if (isPlantaoCritico) {
+        tempoCalculado = Math.round(tempoCalculado * 0.75); // Tempo reduzido em 25%
+    }
 
-let tempoCalculado = dados.tempoLimite;
-if (isPlantaoCritico) {
-tempoCalculado = Math.round(tempoCalculado * 0.75); // Tempo reduzido em 25%
-}
+    gameState = {
+        dados: dados, turno: 1,
+        paS: dados.vitasIniciais.paS, paD: dados.vitasIniciais.paD,
+        fc: dados.vitasIniciais.fc, fr: dados.vitasIniciais.fr, spo2: dados.vitasIniciais.spo2,
+        examesRealizados: [], medicacoesFeitas: [], condutasPraticas: [], concluido: false,
+        tempoRestante: tempoCalculado, iatrogeniasTurno: 0, examesTurno: 0
+    };
+    
+    tickCount = 0;
 
-gameState = {
-dados: dados, turno: 1,
-paS: dados.vitasIniciais.paS, paD: dados.vitasIniciais.paD,
-fc: dados.vitasIniciais.fc, fr: dados.vitasIniciais.fr, spo2: dados.vitasIniciais.spo2,
-examesRealizados: [], medicacoesFeitas: [], condutasPraticas: [], concluido: false,
-tempoRestante: tempoCalculado, iatrogeniasTurno: 0, examesTurno: 0
-};
+    document.getElementById('levelDisplay').innerText = `NÍVEL: ${dados.nivel}`; 
+    document.getElementById('caseIdDisplay').innerText = `Caso #${index + 1} / ${maxCasosSelecionados}`;
+    document.getElementById('patientProfile').innerHTML = dados.perfil;
+    
+    let admissaoMsg = `<div style="color: var(--neon-blue)">[SALA VERMELHA]: ${dados.logs.init}</div>`;
+    if (isPlantaoCritico) {
+        admissaoMsg += `<div style="color: var(--neon-red); font-weight: bold;">⚠️ [ALERTA DESAFIO CRÍTICO]: SEXTA-FEIRA 13 ATIVA! (-25% TEMPO)</div>`;
+    }
+    document.getElementById('chartLog').innerHTML = admissaoMsg;
 
-tickCount = 0;
+    atualizarMonitores();
+    renderizarMenuPrincipal();
+    iniciarCronometro();
+    startPhysiologicalEngine();
+    initAudio();
 
-document.getElementById('levelDisplay').innerText = NÍVEL: ${dados.nivel}; document.getElementById('caseIdDisplay').innerText =Caso #${index + 1} / ${maxCasosSelecionados}`;
-document.getElementById('patientProfile').innerHTML = dados.perfil;
-
-let admissaoMsg = <div style="color: var(--neon-blue)"&gt;[SALA VERMELHA]:${dados.logs.init}</div>; if (isPlantaoCritico) { admissaoMsg +=<div style="color: var(--neon-red); font-weight: bold;">⚠️ [ALERTA DESAFIO CRÍTICO]: SEXTA-FEIRA 13 ATIVA! (-25% TEMPO)</div>`;
-}
-document.getElementById('chartLog').innerHTML = admissaoMsg;
-
-atualizarMonitores();
-renderizarMenuPrincipal();
-iniciarCronometro();
-startPhysiologicalEngine();
-initAudio();
-
-if (animationFrameId) cancelAnimationFrame(animationFrameId);
-canvasX = 0;
-drawECG();
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    canvasX = 0;
+    drawECG();
 }
 
 function iniciarCronometro() {
-atualizarTimerUI();
-timerInterval = setInterval(() => {
-tickCount++;
-if (modoAprendizado && tickCount % 2 !== 0) return;
-
-gameState.tempoRestante--;
-atualizarTimerUI();
-if (gameState.tempoRestante <= 0) {
-clearInterval(timerInterval);
-finalizarJogo(false, "Parada Cardiorrespiratória em assistolia devido ao atraso de conduta.");
+    atualizarTimerUI();
+    timerInterval = setInterval(() => {
+        tickCount++;
+        if (modoAprendizado && tickCount % 2 !== 0) return;
+        
+        gameState.tempoRestante--;
+        atualizarTimerUI();
+        if (gameState.tempoRestante <= 0) {
+            clearInterval(timerInterval);
+            finalizarJogo(false, "Parada Cardiorrespiratória em assistolia devido ao atraso de conduta.");
+        }
+    }, 1000);
 }
-{gameState.fr > 24 ? 'critical' : 'stable'}; document.getElementById('boxSPO2').className =vital-box ${gameState.spo2 &lt; 91 ? 'critical' : 'stable'};
 
-document.getElementById('turnDisplay').innerText = Turno${gameState.turno}/
-}, 1000);
-{iatrogeniasCount}/3`;
+function atualizarTimerUI() {
+    const minutos = Math.floor(gameState.tempoRestante / 60).toString().padStart(2, '0');
+    const segundos = (gameState.tempoRestante % 60).toString().padStart(2, '0');
+    document.getElementById('timerDisplay').innerText = `⏱️ ${minutos}:${segundos}`;
+}
+
+function atualizarMonitores() {
+    document.getElementById('valPA').innerText = `${gameState.paS}/${gameState.paD}`; 
+    document.getElementById('valFC').innerText = `${gameState.fc}`; 
+    document.getElementById('valFR').innerText = `${gameState.fr}`;
+    document.getElementById('valSPO2').innerText = `${gameState.spo2}%`;
+
+    document.getElementById('boxPA').className = `vital-box ${gameState.paS < 90 || gameState.paS > 160 ? 'critical' : 'stable'}`; 
+    document.getElementById('boxFC').className = `vital-box ${gameState.fc > 105 || gameState.fc < 55 ? 'critical' : 'stable'}`;
+    document.getElementById('boxFR').className = `vital-box ${gameState.fr > 24 ? 'critical' : 'stable'}`; 
+    document.getElementById('boxSPO2').className = `vital-box ${gameState.spo2 < 91 ? 'critical' : 'stable'}`;
+
+    document.getElementById('turnDisplay').innerText = `Turno ${gameState.turno}/${gameState.dados.maxTurnos}`;
+    document.getElementById('iatrogeniaDisplay').innerText = `IATROGENIAS: ${iatrogeniasCount}/3`;
 }
 
 function pushLog(txt, tipo) {
-const cores = { info: 'var(--text-main)', sucess: 'var(--neon-green)', alert: 'var(--neon-yellow)', error: 'var(--neon-red)' };
-const container = document.getElementById('chartLog');
-container.innerHTML += <div style="color:${cores[tipo] || cores.info}; margin-top: 5px;">➔ ${txt}&lt;/div>;
-container.scrollTop = container.scrollHeight;
+    const cores = { info: 'var(--text-main)', sucess: 'var(--neon-green)', alert: 'var(--neon-yellow)', error: 'var(--neon-red)' };
+    const container = document.getElementById('chartLog');
+    container.innerHTML += `<div style="color:${cores[tipo] || cores.info}; margin-top: 5px;">➔ ${txt}</div>`;
+    container.scrollTop = container.scrollHeight;
 }
 
 function passarTurno() {
-gameState.turno++;
-if (gameState.turno > gameState.dados.maxTurnos && !gameState.concluido) {
-finalizarJogo(false, "Tempo regulamentar de abordagem esgotado.");
-} else {
-atualizarMonitores();
-}
+    gameState.turno++;
+    if (gameState.turno > gameState.dados.maxTurnos && !gameState.concluido) {
+        finalizarJogo(false, "Tempo regulamentar de abordagem esgotado.");
+    } else {
+        atualizarMonitores();
+    }
 }
 
 function renderizarMenuPrincipal() {
-const panel = document.getElementById('controlPanel');
-let btnMemento = modoAprendizado ? <button class="btn-action btn-help" style="border-color: var(--neon-green); color: var(--neon-green); margin-top: 6px;" onclick="pushLog('[MEMENTO]: ' + gameState.dados.dDica, 'alert')"&gt;💡 Memento Cognitivo&lt;/button> : '';
+    const panel = document.getElementById('controlPanel');
+    let btnMemento = modoAprendizado ? `<button class="btn-action btn-help" style="border-color: var(--neon-green); color: var(--neon-green); margin-top: 6px;" onclick="pushLog('[MEMENTO]: ' + gameState.dados.dDica, 'alert')">💡 Memento Cognitivo</button>` : '';
 
-panel.innerHTML = &lt;button class="btn-action" onclick="abrirSubMenu('exames')"&gt;🔬 Abordagem Propedêutica (Exames)&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 8px;" onclick="abrirSubMenu('condutas')"&gt;💊 Prescrição Farmacológica e Doses&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 8px;" onclick="abrirSubMenu('diagnostico')"&gt;⚖️ Estabelecer Diagnóstico Definitivo&lt;/button&gt; &lt;div style="margin-top: 12px;"&gt;${btnMemento}</div>
-`;
+    panel.innerHTML = `
+        <button class="btn-action" onclick="abrirSubMenu('exames')">🔬 Abordagem Propedêutica (Exames)</button>
+        <button class="btn-action" style="margin-top: 8px;" onclick="abrirSubMenu('condutas')">💊 Prescrição Farmacológica e Doses</button>
+        <button class="btn-action" style="margin-top: 8px;" onclick="abrirSubMenu('diagnostico')">⚖️ Estabelecer Diagnóstico Definitivo</button>
+        <div style="margin-top: 12px;">${btnMemento}</div>
+    `;
 }
 
 function abrirSubMenu(tipo) {
-const panel = document.getElementById('controlPanel');
-if (tipo === 'exames') {
-panel.innerHTML = <button class="btn-action" onclick="solicitarExame('ecg')"&gt;1. Eletrocardiograma de 12 Derivações&lt;/button&gt; &lt;button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('rx')"&gt;2. Radiografia Digital de Tórax no Leito&lt;/button&gt; &lt;button class="btn-action" style="margin-
+    const panel = document.getElementById('controlPanel');
+    if (tipo === 'exames') {
+        panel.innerHTML = `<button class="btn-action" onclick="solicitarExame('ecg')">1. Eletrocardiograma de 12 Derivações</button> <button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('rx')">2. Radiografia Digital de Tórax no Leito</button> <button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('lactato')">3. Gasometria Arterial com Dosagem de Lactato</button> <button class="btn-action" style="margin-top: 6px;" onclick="solicitarExame('glicemia')">4. Glicemia Capilar Periférica</button> <button class="btn-action btn-back" style="margin-top: 12px;" onclick="renderizarMenuPrincipal()">⬅ Voltar</button>`;
+    } else if (tipo === 'condutas') {
+        panel.innerHTML = `<button class="btn-action" onclick="aplicarCondutaDose('aas_clopi')">1. Protocolo Antiagregante Otimizado (AAS 300mg + Clopidogrel 300mg PO)</button> <button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('toraco_agulha')">2. Descompressão Mecânica / Punção de Alívio Imediata</button> <button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('cristaloide_atb')">3. Expansão Volêmica (Cristaloide 30mL/kg) + ATB Amplo Espectro</button> <button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('diazepam')">4. Benzodiazepínico Anticonvulsivante (Diazepam 10mg EV)</button> <button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('manobra_vagal')">5. Manobra Vagal Modificada</button> <button class="btn-action" style="margin-top: 6px;" onclick="aplicarCondutaDose('marcapasso')">6. Marcapasso Transcutâneo / Terapia Elétrica</button> <button class="btn-action btn-back" style="margin-top: 12px;" onclick="renderizarMenuPrincipal()">⬅ Voltar</button>`;
+    } else if (tipo === 'diagnostico') {
+        panel.innerHTML = `<button class="btn-action" onclick="verificarDiagnostico('iam')">➔ IAM com Supra de ST (SCA)</button> <button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('pntx')">➔ Pneumotórax Hipertensivo</button> <button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('sepse')">➔ Choque Séptico</button> <button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('est_epiletico')">➔ Estado de Mal Epiléptico</button> <button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('tsvd')">➔ Taquicardia Supraventricular Paroxística</button> <button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('bavt')">➔ Bloqueio Atrioventricular Total (BAVT)</button> <button class="btn-action" style="margin-top: 6px;" onclick="verificarDiagnostico('hipercalemia')">➔ Hipercalemia Grave</button> <button class="btn-action btn-back" style="margin-top: 12px;" onclick="renderizarMenuPrincipal()">⬅ Voltar</button>`;
+    }
+}
+
+function solicitarExame(exame) {
+    if (gameState.examesRealizados.includes(exame)) {
+        pushLog("Exame já disponível no prontuário.", "alert");
+        return;
+    }
+    gameState.examesRealizados.push(exame);
+    
+    if (gameState.dados.exameOuro !== exame) {
+        examesDesnecessarios++;
+        gameState.examesTurno++;
+    }
+
+    if (gameState.dados.imagemExame && gameState.dados.imagemExame[exame]) {
+        document.getElementById('examImg').src = gameState.dados.imagemExame[exame];
+        document.getElementById('imageTitle').innerText = `RESULTADO VISUAL: ${exame.toUpperCase()}`;
+        document.getElementById('imageBox').style.display = "block";
+    }
+
+    if (gameState.dados.exameOuro === exame || exame === 'ecg' || exame === 'rx' || exame === 'glicemia' || exame === 'lactato') {
+        pushLog(gameState.dados.logs[exame] || "Exame processado.", "sucess");
+    }
+    passarTurno();
+    if (!gameState.concluido) renderizarMenuPrincipal();
+}
+
+function realizarProcedimento(proc) {
+    // Mantida para retrocompatibilidade futura se necessário
+    passarTurno();
+}
+
+function aplicarCondutaDose(conduta) {
+    gameState.medicacoesFeitas.push(conduta);
+
+    if (gameState.dados.condutaCorreta === conduta) {
+        pushLog("Conduta Correta! Resposta fisiológica imediata estabilizando o paciente.", "sucess");
+        if (conduta === 'aas_clopi') { gameState.fc = 74; gameState.paS = 130; }
+        else if (conduta === 'toraco_agulha') { gameState.paS = 118; gameState.fc = 84; gameState.spo2 = 97; gameState.fr = 16; }
+        else if (conduta === 'cristaloide_atb') { gameState.paS = 102; gameState.fc = 90; }
+        else if (conduta === 'diazepam') { gameState.fc = 82; gameState.fr = 14; }
+        else if (conduta === 'manobra_vagal') { gameState.fc = 78; }
+        else if (conduta === 'marcapasso') { gameState.fc = 72; gameState.paS = 115; }
+    } else {
+        pushLog(gameState.dados.logs.errado || "Conduta ineficaz. Sobrecarga mecânica/fisiológica detectada.", "error");
+        gameState.paS -= 20; gameState.fc += 15;
+        iatrogeniasCount++;
+        gameState.iatrogeniasTurno++;
+        if (iatrogeniasCount >= 3) {
+            finalizarJogo(false, "CRM Cassado. Erros iatrogênicos refratários em sequência.");
+            return;
+        }
+    }
+    passarTurno();
+    if (!gameState.concluido) renderizarMenuPrincipal();
+}
+
+function verificarDiagnostico(diag) {
+    if (gameState.dados.diagnosticoCorreto === diag) {
+        if (gameState.medicacoesFeitas.includes(gameState.dados.condutaCorreta)) {
+            finalizarJogo(true, "Manejo e estabilização corretos segundo os guidelines internacionais.");
+        } else {
+            finalizarJogo(false, "Diagnóstico correto, mas faltou realizar a conduta imediata de suporte à vida.");
+        }
+    } else {
+        finalizarJogo(false, "Erro diagnóstico estrutural. Conduta direcionada ao foco errado.");
+    }
+}
+
+function exibirScoreFinal() {
+    const nomeInput = document.getElementById('playerNameInput').value.trim() || "Dr(a). Residente";
+    const overlay = document.getElementById('welcomeOverlay');
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+        <div class="welcome-box">
+            <h2>FIM DE <span>PLANTÃO</span></h2>
+            <div class="creator-tag">Desenvolvido por Wenderson Ribeiro • Aluno de Medicina UFT</div>
+            <p style="color: var(--text-main); font-size: 1.1rem; margin-top: 15px;">Excelente trabalho, <b>${nomeInput}</b>! O seu turno na Sala Vermelha foi concluído.</p>
+            
+            <div style="background: var(--bg-darker); padding: 25px; border-radius: 12px; margin: 20px 0; border: 1px solid var(--border-color); box-shadow: inset 0 0 15px rgba(0,0,0,0.5);">
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Pontuação Acumulada</p>
+                <h3 style="color: var(--neon-green); font-size: 3rem; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">${pontuacaoTotal} <span style="font-size: 1.5rem;">XP</span></h3>
+                <p style="color: var(--neon-blue); font-size: 0.9rem;">Patente Alcançada: <b>${obterElo(pontuacaoTotal)}</b></p>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 5px;">Casos Atendidos: ${casoAtualIndex + 1} / ${maxCasosSelecionados}</p>
+            </div>
+            
+            <button class="btn-action" style="text-align: center; font-weight: 600; font-size: 1rem; padding: 15px;" onclick="location.reload()">🔄 Iniciar Novo Plantão</button>
+        </div>
+    `;
+}
+
+function finalizarJogo(vitoria, mensagem) {
+    clearInterval(timerInterval);
+    if (pBipInterval) clearInterval(pBipInterval);
+    if (physiologicalInterval) clearInterval(physiologicalInterval);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    gameState.concluido = true;
+
+    let precisao = vitoria ? 100 : 40;
+    if (!vitoria) { precisao -= gameState.examesTurno * 10; }
+    let nota = (precisao / 10) - (gameState.iatrogeniasTurno * 1.5);
+    nota = Math.max(0, Math.min(10, nota)).toFixed(1);
+
+    // Módulos competitivos injetados (Elos + Multiplicador do Plantão Crítico)
+    let pontosGanhos = vitoria ? Math.round((parseFloat(nota) * 100) + (gameState.tempoRestante * 2)) : 10;
+    if (isPlantaoCritico && vitoria) {
+        pontosGanhos = Math.round(pontosGanhos * 1.5); // +50% de bônus competitivo
+    }
+    pontuacaoTotal += pontosGanhos;
+    
+    document.getElementById('xpDisplay').innerText = `🏆 ${pontuacaoTotal} XP`;
+    atualizarEloUI();
+
+    const debriefingHTML = `
+        <div class="debriefing-card">
+            <div class="debriefing-title">📊 SCORE DE PERFORMANCE MÉDICA</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; margin: 5px 0 12px 0; color: var(--text-main);">
+                • Patente Atual: <span style="color: var(--neon-yellow); font-weight: bold;">${obterElo(pontuacaoTotal)}</span><br>
+                • Precisão Diagnóstica: <span class="stable">${precisao}%</span><br>
+                • Exames Desnecessários: <span class="warning">${gameState.examesTurno}</span><br>
+                • Iatrogenias Cometidas: <span class="critical">${gameState.iatrogeniasTurno}</span><br>
+                • NOTA DO CASO: <span class="warning" style="font-size:1.1rem; font-weight:bold;">${nota}/10</span><br>
+                • PONTOS ADQUIRIDOS: <span style="color: var(--neon-blue); font-weight:bold;">+${pontosGanhos} XP</span>
+            </div>
+            <div class="debriefing-title">📝 DEBRIEFING FISIOPATOLÓGICO</div>
+            <div>${gameState.dados.debriefing || "Análise clínica finalizada."}</div>
+            <div class="debriefing-ref">📚 Diretriz Corrente: ${gameState.dados.referencia || "Diretrizes Nacionais de Emergência."}</div>
+        </div>
+    `;
+    document.getElementById('debriefingContainer').innerHTML = debriefingHTML;
+
+    const panel = document.getElementById('controlPanel');
+    if (vitoria) {
+        pushLog(`[CASO RESOLVIDO]: ${mensagem}`, "sucess");
+        panel.innerHTML = `<div style="background: rgba(75,181,67,0.1); border: 1px solid var(--neon-green); padding: 15px; border-radius: 8px; color: var(--neon-green); font-weight: bold; text-align: center;">PACIENTE ESTABILIZADO E ENCAMINHADO</div>`;
+    } else {
+        pushLog(`[ÓBITO / FALHA]: ${mensagem}`, "error");
+        panel.innerHTML = `<div style="background: rgba(247,37,133,0.1); border: 1px solid var(--neon-red); padding: 15px; border-radius: 8px; color: var(--neon-red); font-weight: bold; text-align: center;">ÓBITO CONSTATADO NA SALA VERMELHA</div>`;
+    }
+    
+    const btnProximo = document.createElement('button');
+    btnProximo.className = 'btn-action';
+    btnProximo.style.marginTop = '12px';
+    
+    if (casoAtualIndex < databaseCasos.length - 1 && casoAtualIndex < maxCasosSelecionados - 1 && vitoria) {
+        btnProximo.innerText = '➔ Próximo Paciente da Fila';
+        btnProximo.onclick = () => { casoAtualIndex++; carregarCaso(casoAtualIndex); };
+    } else {
+        btnProximo.innerText = '🛑 Concluir Turno e Ver Relatório Final';
+        btnProximo.onclick = () => { exibirScoreFinal(); };
+    }
+    panel.appendChild(btnProximo);
+}
+</script>
+</body>
+</html>
